@@ -4,14 +4,21 @@ LazyGui gui;
 
 float radialSubdivision  = 6;
 float matrixDensity  = 27;
+float testPattern  = 1;
 PVector scaleFactor = new PVector(200, 200);
-PVector origin;
+PVector originOffset;
 
 //boolean variables
 boolean evenMatrix = false;
 
+// objects
 ArrayList<vertex> polygonVertices = new ArrayList<vertex>();
 ArrayList<vertex> guidePoints = new ArrayList<vertex>();
+
+vertex origin =  new vertex(0, 0);
+shapes pattern = new shapes();
+
+// =-=-=-=-=-=[ structs ]=-=-=-=-= //
 
 class vertex {
     float x, y;
@@ -21,17 +28,23 @@ class vertex {
     }
 }
 
+// =-=-=-=-=-=[ userInterface stuffs ]=-=-=-=-= //
+
 
 void handleGui(LazyGui gui) {
     // lazy controls — created automatically first time run
     radialSubdivision = gui.slider("radialSubdivision", radialSubdivision, 0, 10);
+    testPattern = gui.slider("testPattern", testPattern, 0, 16);
     matrixDensity = gui.slider("matrixDensity", matrixDensity, 0, 100);
     scaleFactor  = gui.plotXY("scaleFactor", scaleFactor.x, scaleFactor.y);
-    origin  = gui.plotXY("origin", width /2, height/2);
+    originOffset  = gui.plotXY("originOffset", -width /2, -height/2);
 
     if (gui.button("resetValues")) {
         radialSubdivision  = 6;
         gui.sliderSet("radialSubdivision", 6);
+
+        testPattern  = 3;
+        gui.sliderSet("testPattern", 3);
 
         matrixDensity  = 27;
         gui.sliderSet("matrixDensity", 27);
@@ -39,8 +52,8 @@ void handleGui(LazyGui gui) {
         scaleFactor.set(200, 200);
         gui.plotSet("scaleFactor", 200, 200);
 
-        origin.set(width/2, height/2);
-        gui.plotSet("origin", width/2, height/2);
+        originOffset.set(-width/2, -height/2);
+        gui.plotSet("originOffset", -width/2, -height/2);
 
         // recalculate when reset
         polygonVertices.clear();
@@ -54,6 +67,8 @@ void handleGui(LazyGui gui) {
         exit();
     }
 }
+
+// =-=-=-=-=-=[ some Calculation methods ]=-=-=-=-= //
 
 ArrayList<vertex> calculateShape(ArrayList<vertex> pv) {
     ArrayList<vertex> polygonVertices = pv;	
@@ -74,6 +89,65 @@ ArrayList<vertex> calculateGuidePoints(ArrayList<vertex> gp, boolean evenMatix) 
     return guidePoints;
 }
 
+// =-=-=-=-=-=[ helpers ]=-=-=-=-= //
+
+void drawPattern(int id) {
+    switch (id) {
+    case 1:
+        pattern.circle(origin, matrixDensity);
+		break;
+    case 2:
+        pattern.connectedUp(origin, matrixDensity);
+		break;
+    case 3:
+        pattern.connectedDown(origin, matrixDensity);
+		break;
+    case 4:
+        pattern.connectedLeft(origin, matrixDensity);
+		break;
+    case 5:
+		pattern.connectedRight(origin, matrixDensity);
+		break;
+    case 6:
+		pattern.catEars_bottomLeft(origin, matrixDensity);
+		break;
+    case 7:
+		pattern.catEars_bottomRight(origin, matrixDensity);
+		break;
+    case 8:
+		pattern.catEars_topLeft(origin, matrixDensity);
+		break;
+    case 9:
+		pattern.catEars_topRight(origin, matrixDensity);
+		break;
+    case 10:
+		pattern.eyeHorizontal(origin, matrixDensity);
+		break;
+    case 11:
+		pattern.eyeVertical(origin, matrixDensity);
+		break;
+    case 12:
+		pattern.bottomPizzaSlice(origin, matrixDensity);
+		break;
+    case 13:
+		pattern.topPizzaSlice(origin, matrixDensity);
+		break;
+    case 14:
+		pattern.leftPizzaSlice(origin, matrixDensity);
+		break;
+    case 15:
+		pattern.rightPizzaSlice(origin, matrixDensity);
+		break;
+    case 16:
+		pattern.diamond(origin, matrixDensity);
+		break;
+	default:
+		break;
+    }
+}
+
+// =-=-=-=-=-=[ raycasting to check if the point is in the polygon ]=-=-=-=-= //
+
 boolean isInBetween(float y, float y1, float y2) {
     if (y1 > y2) {
         return y <= y1 && y > y2;
@@ -84,7 +158,7 @@ boolean isInBetween(float y, float y1, float y2) {
 
 
 vertex getIntersection(vertex point, vertex a, vertex b) {
-    vertex pointOfIntersection = new vertex(a.x,point.y);
+    vertex pointOfIntersection = new vertex(a.x, point.y);
     try {
         float slope = (b.y - a.y)/(b.x -a.x);
         pointOfIntersection.y = point.y;
@@ -92,7 +166,7 @@ vertex getIntersection(vertex point, vertex a, vertex b) {
         return pointOfIntersection;
     }
     catch (ArithmeticException e) {
-		System.out.println("encountered arithmetic exception");
+        System.out.println("encountered arithmetic exception");
         return pointOfIntersection;
     }
 }
@@ -118,6 +192,8 @@ boolean containedIn(vertex point, ArrayList<vertex> polygon) {
     return true;
 }
 
+// =-=-=-=-=-=[ actual processing 4 stuffs ]=-=-=-=-= //
+
 void setup() {
     size(600, 600, P2D);
     gui = new LazyGui(this); // init LazyGui
@@ -128,12 +204,13 @@ void setup() {
 }
 
 void draw() {
+    scale(-1, -1);
     background(30);
     handleGui(gui);
-    translate(origin.x, origin.y); // set origin (0,0) to the middle of the screen
+    translate(originOffset.x, originOffset.y); // set originOffset (0,0) to the middle of the screen
 
     // recalculate when values changes
-    if (gui.hasChanged("radialSubdivision") || gui.hasChanged("scaleFactor") || gui.hasChanged("origin")) {
+    if (gui.hasChanged("radialSubdivision") || gui.hasChanged("scaleFactor") || gui.hasChanged("originOffset")) {
         polygonVertices.clear();
         polygonVertices = calculateShape(polygonVertices);
     }
@@ -168,6 +245,11 @@ void draw() {
     stroke(255, 0, 0);
     strokeWeight(5);
     point(0, 0); // mark origin
+
+    stroke(255, 255, 255);
+    strokeWeight(2);
+    noFill();
+    drawPattern(int(testPattern));
 
     gui.draw(); // draw the GUI
 }

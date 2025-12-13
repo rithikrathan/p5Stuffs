@@ -34,7 +34,8 @@ def setup():
     #     for j in range(0, cols):
     #         currGen[i][j] = random.randint(0, 1)
 
-    list = [(400, 400)]
+    list = [(40, 20), (41, 20), (41, 24), (43, 21),
+            (44, 20), (45, 20), (46, 20)]
 
     for x, y in list:
         currGen[x][y] = 1
