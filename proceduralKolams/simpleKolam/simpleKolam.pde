@@ -1,8 +1,6 @@
 import com.krab.lazy.*;
 import java.util.Queue;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.ArrayDeque;
 
 LazyGui gui;
 
@@ -81,7 +79,7 @@ void handleGui(LazyGui gui) {
         polygonVertices = calculateShape(polygonVertices);
 
         guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
+        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
     }
 
     if (gui.button("Quit")) {
@@ -112,17 +110,16 @@ ArrayList<point> calculateShape(ArrayList<point> pv) {
 ArrayList<point> calculateGuidePoints(
     ArrayList<point> gp,
     point origin,
-    boolean evenMatrix) {
+    boolean evenMatrix,
+	float matrixDensity) {
 
-    Queue<point> q = new LinkedList<>();
-    Set<point> visited = new HashSet<>();
+    Queue<point> q = new ArrayDeque<>();
 
     point start = evenMatrix
         ? new point(origin.x + matrixDensity / 2, origin.y + matrixDensity / 2)
         : origin;
 
     q.add(start);
-    visited.add(start);
 
     while (!q.isEmpty()) {
         point curr = q.poll();
@@ -139,8 +136,7 @@ ArrayList<point> calculateGuidePoints(
         };
 
         for (point p : neighbors) {
-            if (!visited.contains(p) && containedIn(p, polygonVertices)) {
-                visited.add(p);
+            if (notIn(p,gp)) {
                 q.add(p);
             }
         }
@@ -268,7 +264,7 @@ void setup() {
 
     //calculate with the initial values
     polygonVertices = calculateShape(polygonVertices);
-    guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
+    guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
 }
 
 void draw() {
@@ -285,7 +281,7 @@ void draw() {
 
     if (gui.hasChanged("matrixDensity")) {
         guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
+        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
     }
 
 

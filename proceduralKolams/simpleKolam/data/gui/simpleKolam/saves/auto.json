@@ -794,7 +794,7 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 7.0,
+      "valueFloat": 1.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "testPattern",
@@ -884,7 +884,7 @@
   ],
   "window": {
     "posX": 66.0,
-    "posY": 88.0,
+    "posY": 176.0,
     "closed": false,
     "windowSizeX": 220.0
   },
