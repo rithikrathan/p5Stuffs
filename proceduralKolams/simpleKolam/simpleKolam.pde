@@ -1,4 +1,8 @@
 import com.krab.lazy.*;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.HashSet;
 
 LazyGui gui;
 
@@ -11,22 +15,39 @@ PVector originOffset;
 //boolean variables
 boolean evenMatrix = false;
 
-// objects
-ArrayList<vertex> polygonVertices = new ArrayList<vertex>();
-ArrayList<vertex> guidePoints = new ArrayList<vertex>();
+// objec
+ArrayList<point> polygonVertices = new ArrayList<point>();
+ArrayList<point> guidePoints = new ArrayList<point>();
 
-vertex origin =  new vertex(0, 0);
-shapes pattern = new shapes();
+point origin =  new point(0, 0);
+patterns pattern = new patterns();
 
-// =-=-=-=-=-=[ structs ]=-=-=-=-= //
+// =-=-=-=-=-=[ classes ]=-=-=-=-= //
 
-class vertex {
+class point {
     float x, y;
-    vertex(float x, float y) {
+
+    point(float x, float y) {
         this.x = x;
         this.y = y;
     }
+
+    @Override
+        public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof point)) return false;
+        point p = (point) o;
+        return x == p.x && y == p.y;
+    }
 }
+
+// class unitCell extends point {
+//     uniCell(float id, float y) {
+//         this.x = x;
+//         this.y = y;
+//     }
+// 	void draw(){}
+// }
 
 // =-=-=-=-=-=[ userInterface stuffs ]=-=-=-=-= //
 
@@ -60,7 +81,7 @@ void handleGui(LazyGui gui) {
         polygonVertices = calculateShape(polygonVertices);
 
         guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, evenMatrix);
+        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
     }
 
     if (gui.button("Quit")) {
@@ -70,79 +91,117 @@ void handleGui(LazyGui gui) {
 
 // =-=-=-=-=-=[ some Calculation methods ]=-=-=-=-= //
 
-ArrayList<vertex> calculateShape(ArrayList<vertex> pv) {
-    ArrayList<vertex> polygonVertices = pv;	
+ArrayList<point> calculateShape(ArrayList<point> pv) {
+    // in python the arguments are references
+    // idk if gp in the argument is the reference or not
+    // if gp is a reference it will update the list, which i want
+    // but idk if its a reference
+    // so i create a list and return it
+    ArrayList<point> polygonVertices = pv;	
     // calculate shape
     for (int i = 0; i < int(radialSubdivision); i++) {
         float theta = i * TAU / radialSubdivision;
         float x = scaleFactor.x * cos(theta);
         float y = scaleFactor.y * sin(theta);
-        polygonVertices.add(new vertex(x, y));
+        polygonVertices.add(new point(x, y));
     }
     return polygonVertices;
 }
 
-ArrayList<vertex> calculateGuidePoints(ArrayList<vertex> gp, boolean evenMatix) {
-    ArrayList<vertex> guidePoints = gp;	
-    // calculate guidePoints
 
-    return guidePoints;
+ArrayList<point> calculateGuidePoints(
+    ArrayList<point> gp,
+    point origin,
+    boolean evenMatrix) {
+
+    Queue<point> q = new LinkedList<>();
+    Set<point> visited = new HashSet<>();
+
+    point start = evenMatrix
+        ? new point(origin.x + matrixDensity / 2, origin.y + matrixDensity / 2)
+        : origin;
+
+    q.add(start);
+    visited.add(start);
+
+    while (!q.isEmpty()) {
+        point curr = q.poll();
+
+        if (!containedIn(curr, polygonVertices)) continue;
+
+        gp.add(curr);
+
+        point[] neighbors = {
+            new point(curr.x, curr.y + matrixDensity),
+            new point(curr.x + matrixDensity, curr.y),
+            new point(curr.x, curr.y - matrixDensity),
+            new point(curr.x - matrixDensity, curr.y)
+        };
+
+        for (point p : neighbors) {
+            if (!visited.contains(p) && containedIn(p, polygonVertices)) {
+                visited.add(p);
+                q.add(p);
+            }
+        }
+    }
+    return gp;
 }
 
 // =-=-=-=-=-=[ helpers ]=-=-=-=-= //
 
-void drawPattern(int id) {
+void drawPattern(point center, int id) {
     switch (id) {
     case 1:
-        pattern.circle(origin, matrixDensity);
-		break;
+        pattern.circle(center, matrixDensity);
+        break;
     case 2:
-        pattern.connectedUp(origin, matrixDensity);
-		break;
+        pattern.connectedUp(center, matrixDensity);
+        break;
     case 3:
-        pattern.connectedDown(origin, matrixDensity);
-		break;
+        pattern.connectedDown(center, matrixDensity);
+        break;
     case 4:
-        pattern.connectedLeft(origin, matrixDensity);
-		break;
+        pattern.connectedLeft(center, matrixDensity);
+        break;
     case 5:
-		pattern.connectedRight(origin, matrixDensity);
-		break;
+        pattern.connectedRight(center, matrixDensity);
+        break;
     case 6:
-		pattern.catEars_bottomLeft(origin, matrixDensity);
-		break;
+        pattern.catEars_bottomLeft(center, matrixDensity);
+        break;
     case 7:
-		pattern.catEars_bottomRight(origin, matrixDensity);
-		break;
+        pattern.catEars_bottomRight(center, matrixDensity);
+        break;
     case 8:
-		pattern.catEars_topLeft(origin, matrixDensity);
-		break;
+        pattern.catEars_topLeft(center, matrixDensity);
+        break;
     case 9:
-		pattern.catEars_topRight(origin, matrixDensity);
-		break;
+        pattern.catEars_topRight(center, matrixDensity);
+        break;
     case 10:
-		pattern.eyeHorizontal(origin, matrixDensity);
-		break;
+        pattern.eyeHorizontal(center, matrixDensity);
+        break;
     case 11:
-		pattern.eyeVertical(origin, matrixDensity);
-		break;
+        pattern.eyeVertical(center, matrixDensity);
+        break;
     case 12:
-		pattern.bottomPizzaSlice(origin, matrixDensity);
-		break;
+        pattern.bottomPizzaSlice(center, matrixDensity);
+        break;
     case 13:
-		pattern.topPizzaSlice(origin, matrixDensity);
-		break;
+        pattern.topPizzaSlice(center, matrixDensity);
+        break;
     case 14:
-		pattern.leftPizzaSlice(origin, matrixDensity);
-		break;
+        pattern.leftPizzaSlice(center, matrixDensity);
+        break;
     case 15:
-		pattern.rightPizzaSlice(origin, matrixDensity);
-		break;
+        pattern.rightPizzaSlice(center, matrixDensity);
+        break;
     case 16:
-		pattern.diamond(origin, matrixDensity);
-		break;
-	default:
-		break;
+        pattern.diamond(center, matrixDensity);
+        break;
+    default:
+        break;
     }
 }
 
@@ -157,8 +216,8 @@ boolean isInBetween(float y, float y1, float y2) {
 }
 
 
-vertex getIntersection(vertex point, vertex a, vertex b) {
-    vertex pointOfIntersection = new vertex(a.x, point.y);
+point getIntersection(point point, point a, point b) {
+    point pointOfIntersection = new point(a.x, point.y);
     try {
         float slope = (b.y - a.y)/(b.x -a.x);
         pointOfIntersection.y = point.y;
@@ -171,14 +230,14 @@ vertex getIntersection(vertex point, vertex a, vertex b) {
     }
 }
 
-boolean containedIn(vertex point, ArrayList<vertex> polygon) {
+boolean containedIn(point point, ArrayList<point> polygon) {
     int count = 0;
-    for (int i = 0; i < polygonVertices.size(); i++) {
-        vertex vert_a = polygonVertices.get(i); //current vertex
-        vertex vert_b = polygonVertices.get((i+1) % polygonVertices.size()); // next vertex
+    for (int i = 0; i < polygon.size(); i++) {
+        point vert_a = polygon.get(i); //current point
+        point vert_b = polygon.get((i+1) % polygon.size()); // next point
 
         if (vert_a.x != vert_b.x && isInBetween(point.y, vert_a.y, vert_b.y)) {
-            vertex pointOfIntersection = getIntersection(point, vert_a, vert_b);
+            point pointOfIntersection = getIntersection(point, vert_a, vert_b);
             if (pointOfIntersection.x > point.x) {
                 count ++;
             }
@@ -192,6 +251,15 @@ boolean containedIn(vertex point, ArrayList<vertex> polygon) {
     return true;
 }
 
+boolean notIn(point curr, ArrayList<point> points) {
+    for (int i = 0; i < points.size(); i++) {
+        if (points.get(i).equals(curr)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // =-=-=-=-=-=[ actual processing 4 stuffs ]=-=-=-=-= //
 
 void setup() {
@@ -200,7 +268,7 @@ void setup() {
 
     //calculate with the initial values
     polygonVertices = calculateShape(polygonVertices);
-    guidePoints = calculateGuidePoints(guidePoints, evenMatrix);
+    guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
 }
 
 void draw() {
@@ -217,13 +285,13 @@ void draw() {
 
     if (gui.hasChanged("matrixDensity")) {
         guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, evenMatrix);
+        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix);
     }
 
 
     for (int i = 0; i < polygonVertices.size(); i++) {
-        vertex vert_i = polygonVertices.get(i); //current vertex
-        vertex vert_j = polygonVertices.get((i+1) % polygonVertices.size()); // next vertex
+        point vert_i = polygonVertices.get(i); //current point
+        point vert_j = polygonVertices.get((i+1) % polygonVertices.size()); // next point
 
         // show edges
         stroke(100, 179, 100);
@@ -249,7 +317,10 @@ void draw() {
     stroke(255, 255, 255);
     strokeWeight(2);
     noFill();
-    drawPattern(int(testPattern));
+    for (int i = 0; i < guidePoints.size(); i++) {
+        point curr = guidePoints.get(i);
+        drawPattern(curr, int(testPattern));
+    }
 
     gui.draw(); // draw the GUI
 }

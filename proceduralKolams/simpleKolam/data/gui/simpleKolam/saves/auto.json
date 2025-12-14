@@ -794,14 +794,14 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 9.0,
+      "valueFloat": 7.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "testPattern",
       "type": "VALUE"
     },
     {
-      "valueFloat": 90.0,
+      "valueFloat": 100.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "matrixDensity",
@@ -883,8 +883,8 @@
     }
   ],
   "window": {
-    "posX": 44.0,
-    "posY": 44.0,
+    "posX": 66.0,
+    "posY": 88.0,
     "closed": false,
     "windowSizeX": 220.0
   },
