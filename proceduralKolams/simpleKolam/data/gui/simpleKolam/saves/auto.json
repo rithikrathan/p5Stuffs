@@ -787,21 +787,21 @@
       "type": "FOLDER"
     },
     {
-      "valueFloat": 4.0,
+      "valueFloat": 6.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "radialSubdivision",
       "type": "VALUE"
     },
     {
-      "valueFloat": 1.0,
+      "valueFloat": 16.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "testPattern",
       "type": "VALUE"
     },
     {
-      "valueFloat": 100.0,
+      "valueFloat": 34.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "matrixDensity",
@@ -883,8 +883,8 @@
     }
   ],
   "window": {
-    "posX": 66.0,
-    "posY": 176.0,
+    "posX": 154.0,
+    "posY": 286.0,
     "closed": false,
     "windowSizeX": 220.0
   },

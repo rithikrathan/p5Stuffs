@@ -1,4 +1,5 @@
 import com.krab.lazy.*;
+
 import java.util.Queue;
 import java.util.ArrayDeque;
 
@@ -147,54 +148,55 @@ ArrayList<point> calculateGuidePoints(
 // =-=-=-=-=-=[ helpers ]=-=-=-=-= //
 
 void drawPattern(point center, int id) {
+	float dick = 2;
     switch (id) {
     case 1:
-        pattern.circle(center, matrixDensity);
+        pattern.circle(center, matrixDensity/dick);
         break;
     case 2:
-        pattern.connectedUp(center, matrixDensity);
+        pattern.connectedUp(center, matrixDensity/dick);
         break;
     case 3:
-        pattern.connectedDown(center, matrixDensity);
+        pattern.connectedDown(center, matrixDensity/dick);
         break;
     case 4:
-        pattern.connectedLeft(center, matrixDensity);
+        pattern.connectedLeft(center, matrixDensity/dick);
         break;
     case 5:
-        pattern.connectedRight(center, matrixDensity);
+        pattern.connectedRight(center, matrixDensity/dick);
         break;
     case 6:
-        pattern.catEars_bottomLeft(center, matrixDensity);
+        pattern.catEars_bottomLeft(center, matrixDensity/dick);
         break;
     case 7:
-        pattern.catEars_bottomRight(center, matrixDensity);
+        pattern.catEars_bottomRight(center, matrixDensity/dick);
         break;
     case 8:
-        pattern.catEars_topLeft(center, matrixDensity);
+        pattern.catEars_topLeft(center, matrixDensity/dick);
         break;
     case 9:
-        pattern.catEars_topRight(center, matrixDensity);
+        pattern.catEars_topRight(center, matrixDensity/dick);
         break;
     case 10:
-        pattern.eyeHorizontal(center, matrixDensity);
+        pattern.eyeHorizontal(center, matrixDensity/dick);
         break;
     case 11:
-        pattern.eyeVertical(center, matrixDensity);
+        pattern.eyeVertical(center, matrixDensity/dick);
         break;
     case 12:
-        pattern.bottomPizzaSlice(center, matrixDensity);
+        pattern.bottomPizzaSlice(center, matrixDensity/dick);
         break;
     case 13:
-        pattern.topPizzaSlice(center, matrixDensity);
+        pattern.topPizzaSlice(center, matrixDensity/dick);
         break;
     case 14:
-        pattern.leftPizzaSlice(center, matrixDensity);
+        pattern.leftPizzaSlice(center, matrixDensity/dick);
         break;
     case 15:
-        pattern.rightPizzaSlice(center, matrixDensity);
+        pattern.rightPizzaSlice(center, matrixDensity/dick);
         break;
     case 16:
-        pattern.diamond(center, matrixDensity);
+        pattern.diamond(center, matrixDensity/dick);
         break;
     default:
         break;
