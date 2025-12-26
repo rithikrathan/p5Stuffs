@@ -1,324 +1,329 @@
 import com.krab.lazy.*;
-
 import java.util.Queue;
 import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
+
 
 LazyGui gui;
 
-float radialSubdivision  = 6;
-float matrixDensity  = 27;
-float testPattern  = 1;
-PVector scaleFactor = new PVector(200, 200);
+// =-=-=-=-=-=[ variables ]=-=-=-=-= //
+int nf = 0;
+int nt = 0;
+final point origin = new point(0,0);
+
+
+// =-=-=-=-=-=[ boolean variables ]=-=-=-=-= //
+volatile boolean compute = false;
+
+boolean showPolygon = true;
+boolean showSection = true;
+boolean showPattern = false;
+boolean showGuidePoints = false;
+boolean showOrigin = true;
+
+// =-=-=-=-=-=[ ciriticalSection ]=-=-=-=-= //
+float testPattern = 1;
+float matrixDensity = 27;
+float radialSubdivision = 6;
+
 PVector originOffset;
+PVector scaleFactor;
 
-//boolean variables
-boolean evenMatrix = false;
-
-// objec
-ArrayList<point> polygonVertices = new ArrayList<point>();
-ArrayList<point> guidePoints = new ArrayList<point>();
-
-point origin =  new point(0, 0);
+// =-=-=-=-=-=[ Objects ]=-=-=-=-= //
+final Object mutex = new Object();
 patterns pattern = new patterns();
+ArrayList<point> polygonVertices =  new ArrayList<point>();
 
-// =-=-=-=-=-=[ classes ]=-=-=-=-= //
+ArrayList<unitCell> unitCells = new ArrayList<unitCell>();
+ArrayList<unitCell> frameBuffer = new ArrayList<unitCell>();
 
-class point {
-    float x, y;
-
-    point(float x, float y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    @Override
-        public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof point)) return false;
-        point p = (point) o;
-        return x == p.x && y == p.y;
-    }
+// =-=-=-=-=-=[ Jobs ]=-=-=-=-= //
+void setup(){
+	size(600,600,P2D);
+	gui =  new LazyGui(this);
+	thread("calculate");
 }
 
-// class unitCell extends point {
-//     uniCell(float id, float y) {
-//         this.x = x;
-//         this.y = y;
-//     }
-// 	void draw(){}
-// }
+void calculate(){
+	println("thread started???");
+	while (true) {
+		if (compute) {
+			println("calculating");
+			int count = 0;
+			synchronized (mutex){
+				println("calculation thread aquired mutex lock");
+				// step 1: Calculate polygon
+				polygonVertices.clear();
+				for (int i = 0; i < int(radialSubdivision); i++) {
+					float theta = i * TAU / radialSubdivision;
+					float x = scaleFactor.x * cos(theta);
+					float y = scaleFactor.y * sin(theta);
+					polygonVertices.add(new point(x,y));
+				}
 
-// =-=-=-=-=-=[ userInterface stuffs ]=-=-=-=-= //
+				// step 2: Generate UnitCells
+				Queue<unitCell> q = new ArrayDeque<unitCell>();
 
+				unitCell start = new unitCell(origin.x, origin.y,0);
 
-void handleGui(LazyGui gui) {
-    // lazy controls — created automatically first time run
-    radialSubdivision = gui.slider("radialSubdivision", radialSubdivision, 0, 10);
-    testPattern = gui.slider("testPattern", testPattern, 0, 16);
-    matrixDensity = gui.slider("matrixDensity", matrixDensity, 0, 100);
-    scaleFactor  = gui.plotXY("scaleFactor", scaleFactor.x, scaleFactor.y);
-    originOffset  = gui.plotXY("originOffset", -width /2, -height/2);
+				q.add(start);
 
-    if (gui.button("resetValues")) {
-        radialSubdivision  = 6;
-        gui.sliderSet("radialSubdivision", 6);
+				while (!q.isEmpty()) {
+					unitCell curr = q.poll();
 
-        testPattern  = 3;
-        gui.sliderSet("testPattern", 3);
+					if (!containedIn(curr, polygonVertices)) continue;
 
-        matrixDensity  = 27;
-        gui.sliderSet("matrixDensity", 27);
+					unitCells.clear();
+					unitCells.add(curr);
 
-        scaleFactor.set(200, 200);
-        gui.plotSet("scaleFactor", 200, 200);
+					unitCell[] neighbors = {
+						new unitCell(curr.x, curr.y + matrixDensity,0),
+						new unitCell(curr.x + matrixDensity, curr.y,0),
+						new unitCell(curr.x, curr.y - matrixDensity,0),
+						new unitCell(curr.x - matrixDensity, curr.y,0)
+					};
 
-        originOffset.set(-width/2, -height/2);
-        gui.plotSet("originOffset", -width/2, -height/2);
-
-        // recalculate when reset
-        polygonVertices.clear();
-        polygonVertices = calculateShape(polygonVertices);
-
-        guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
-    }
-
-    if (gui.button("Quit")) {
-        exit();
-    }
+					// using critical section from calculation thread
+					for (unitCell u: neighbors) {
+						if (notIn(u,unitCells)) {
+							count ++;
+							q.add(u);
+						}
+					}
+					println(count);
+					count = 0;
+				}
+				
+				// step 3: Generate pattern
+				
+				// set the compute variable to false
+				compute = false;
+				println("reset compute flag");
+			}
+		}
+	}
 }
 
-// =-=-=-=-=-=[ some Calculation methods ]=-=-=-=-= //
+void handleGui(LazyGui gui){
+	testPattern = gui.slider("testPattern", testPattern, 0, 16);
+	matrixDensity = gui.slider("matrixDensity", matrixDensity, 0, 100);
+	radialSubdivision = gui.slider("radialSubdivision", radialSubdivision, 0, 10);
 
-ArrayList<point> calculateShape(ArrayList<point> pv) {
-    // in python the arguments are references
-    // idk if gp in the argument is the reference or not
-    // if gp is a reference it will update the list, which i want
-    // but idk if its a reference
-    // so i create a list and return it
-    ArrayList<point> polygonVertices = pv;	
-    // calculate shape
-    for (int i = 0; i < int(radialSubdivision); i++) {
-        float theta = i * TAU / radialSubdivision;
-        float x = scaleFactor.x * cos(theta);
-        float y = scaleFactor.y * sin(theta);
-        polygonVertices.add(new point(x, y));
-    }
-    return polygonVertices;
+	originOffset  = gui.plotXY("originOffset", width /2, height/2);
+	scaleFactor  = gui.plotXY("scaleFactor", 50, 50);
+
+	if (gui.button("resetValues")) {
+		testPattern = 0;
+		gui.sliderSet("testPattern", 0);
+
+		matrixDensity = 27;
+		gui.sliderSet("matrixDensity",27);
+			
+		radialSubdivision = 6;
+		gui.sliderSet("radialSubdivision",6);
+
+		originOffset.set(width/2,height/2);
+		gui.plotSet("originOffset", width /2, height/2);
+
+		scaleFactor.set(50,50);
+		gui.plotSet("scaleFactor",50,50);
+	}
+
+	if (gui.button("stop")) {
+		exit();
+	}
+
+	// calculate everytime a value changes using shared variable
+	if (gui.hasChanged("radialSubdivision") ||
+		gui.hasChanged("scaleFactor") || 
+		gui.hasChanged("matrixDensity")){
+
+		compute = true;
+		println("set compute flag");
+	}
+}
+
+void draw(){
+	//basic setup
+	background(30);
+	handleGui(gui);
+	translate(originOffset.x,originOffset.y); // set the origin to the middle of the screen
+
+	// some draw logic
+	strokeWeight(6);
+	noFill();
+	stroke(255,255,255);
+
+	// using critical section by the animation thread
+	synchronized (mutex){
+		for ( int i = 0; i < polygonVertices.size(); i++) {
+			// draw shape
+			point a = polygonVertices.get(i);
+			point b = polygonVertices.get((i + 1) % polygonVertices.size());
+			stroke(100, 179, 100);
+			strokeWeight(2);
+			line(a.x, a.y, b.x, b.y);
+
+			// show segments
+			stroke(100, 100, 200);
+			strokeWeight(1);
+			line(0, 0, b.x, b.y);
+
+			// show vertices
+			stroke(0, 255, 0);
+			strokeWeight(7);
+			point(a.x, a.y);
+		}
+
+		for(unitCell u : unitCells){
+			drawCell(u);
+		}
+
+	}
+	
+
+	// draw gui 
+	gui.draw();
+}
+
+// =-=-=-=-=-=[ helper classes ]=-=-=-=-= //
+class point{
+	float x;
+	float y;
+
+	point(float x, float y){
+		this.x = x;
+		this.y = y;
+	}
+}
+
+class unitCell extends point{
+	int patternId;
+
+	unitCell(float x, float y, int id){
+		super(x,y);
+		this.patternId = id;
+	}
+
+	public boolean isEqual(unitCell another){
+		if (this.patternId == another.patternId && this.x == another.x && this.y ==  another.y) {return true;}
+		return false;
+	}
+}
+
+// =-=-=-=-=-=[ helper methods ]=-=-=-=-= //
+
+// raycasting to check if the point is in the polygon
+boolean isInBetween(float y, float y1, float y2){
+	if (y1 > y2) {
+		return y <= y1 && y > y2;
+	} else {
+		return y <= y2 && y > y1;
+	}
+}
+
+point getIntersection(point rayPoint, point a, point b){
+	point pointOfIntersection = new point(a.x, rayPoint.y);
+	try {
+		float slope = (b.y - a.y)/(b.x -a.x);
+		pointOfIntersection.y = rayPoint.y;
+		pointOfIntersection.x = ((pointOfIntersection.y - a.y)/slope)+a.x;
+		return pointOfIntersection;
+	}
+	catch (ArithmeticException e) {
+		println("encountered arithmetic exception");
+		return pointOfIntersection;
+	}
+}
+
+boolean containedIn(point guidePoint, ArrayList<point> polygon){
+	int count = 0;
+	for (int i = 0; i < polygon.size(); i++) {
+
+		point vert_a = polygon.get(i); //current point
+		point vert_b = polygon.get((i+1) % polygon.size()); // next point
+
+		if (vert_a.x != vert_b.x && isInBetween(guidePoint.y, vert_a.y, vert_b.y)) {
+			point pointOfIntersection = getIntersection(guidePoint, vert_a, vert_b);
+			if (pointOfIntersection.x > guidePoint.x) {
+				count ++;
+			}
+		}
+	}
+
+	if (count % 2 == 0) {return false;};
+	return true;
+}
+
+boolean notIn(unitCell curr, List<unitCell> UnitCells){
+	for (unitCell UnitCell: UnitCells){
+		nf ++;
+		println("num of false: " + nf);
+		if (UnitCell.isEqual(curr)) {return false;} 
+	}
+	nt ++;
+	println("num of true: " + nt);
+	return true;
 }
 
 
-ArrayList<point> calculateGuidePoints(
-    ArrayList<point> gp,
-    point origin,
-    boolean evenMatrix,
-	float matrixDensity) {
-
-    Queue<point> q = new ArrayDeque<>();
-
-    point start = evenMatrix
-        ? new point(origin.x + matrixDensity / 2, origin.y + matrixDensity / 2)
-        : origin;
-
-    q.add(start);
-
-    while (!q.isEmpty()) {
-        point curr = q.poll();
-
-        if (!containedIn(curr, polygonVertices)) continue;
-
-        gp.add(curr);
-
-        point[] neighbors = {
-            new point(curr.x, curr.y + matrixDensity),
-            new point(curr.x + matrixDensity, curr.y),
-            new point(curr.x, curr.y - matrixDensity),
-            new point(curr.x - matrixDensity, curr.y)
-        };
-
-        for (point p : neighbors) {
-            if (notIn(p,gp)) {
-                q.add(p);
-            }
-        }
-    }
-    return gp;
-}
-
-// =-=-=-=-=-=[ helpers ]=-=-=-=-= //
-
-void drawPattern(point center, int id) {
-	float dick = 2;
-    switch (id) {
-    case 1:
-        pattern.circle(center, matrixDensity/dick);
-        break;
-    case 2:
-        pattern.connectedUp(center, matrixDensity/dick);
-        break;
-    case 3:
-        pattern.connectedDown(center, matrixDensity/dick);
-        break;
-    case 4:
-        pattern.connectedLeft(center, matrixDensity/dick);
-        break;
-    case 5:
-        pattern.connectedRight(center, matrixDensity/dick);
-        break;
-    case 6:
-        pattern.catEars_bottomLeft(center, matrixDensity/dick);
-        break;
-    case 7:
-        pattern.catEars_bottomRight(center, matrixDensity/dick);
-        break;
-    case 8:
-        pattern.catEars_topLeft(center, matrixDensity/dick);
-        break;
-    case 9:
-        pattern.catEars_topRight(center, matrixDensity/dick);
-        break;
-    case 10:
-        pattern.eyeHorizontal(center, matrixDensity/dick);
-        break;
-    case 11:
-        pattern.eyeVertical(center, matrixDensity/dick);
-        break;
-    case 12:
-        pattern.bottomPizzaSlice(center, matrixDensity/dick);
-        break;
-    case 13:
-        pattern.topPizzaSlice(center, matrixDensity/dick);
-        break;
-    case 14:
-        pattern.leftPizzaSlice(center, matrixDensity/dick);
-        break;
-    case 15:
-        pattern.rightPizzaSlice(center, matrixDensity/dick);
-        break;
-    case 16:
-        pattern.diamond(center, matrixDensity/dick);
-        break;
-    default:
-        break;
-    }
-}
-
-// =-=-=-=-=-=[ raycasting to check if the point is in the polygon ]=-=-=-=-= //
-
-boolean isInBetween(float y, float y1, float y2) {
-    if (y1 > y2) {
-        return y <= y1 && y > y2;
-    } else {
-        return y <= y2 && y > y1;
-    }
-}
-
-
-point getIntersection(point point, point a, point b) {
-    point pointOfIntersection = new point(a.x, point.y);
-    try {
-        float slope = (b.y - a.y)/(b.x -a.x);
-        pointOfIntersection.y = point.y;
-        pointOfIntersection.x = ((pointOfIntersection.y - a.y)/slope)+a.x;
-        return pointOfIntersection;
-    }
-    catch (ArithmeticException e) {
-        System.out.println("encountered arithmetic exception");
-        return pointOfIntersection;
-    }
-}
-
-boolean containedIn(point point, ArrayList<point> polygon) {
-    int count = 0;
-    for (int i = 0; i < polygon.size(); i++) {
-        point vert_a = polygon.get(i); //current point
-        point vert_b = polygon.get((i+1) % polygon.size()); // next point
-
-        if (vert_a.x != vert_b.x && isInBetween(point.y, vert_a.y, vert_b.y)) {
-            point pointOfIntersection = getIntersection(point, vert_a, vert_b);
-            if (pointOfIntersection.x > point.x) {
-                count ++;
-            }
-        }
-    }
-
-    if (count % 2 == 0) {
-        return false;
-    }
-
-    return true;
-}
-
-boolean notIn(point curr, ArrayList<point> points) {
-    for (int i = 0; i < points.size(); i++) {
-        if (points.get(i).equals(curr)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// =-=-=-=-=-=[ actual processing 4 stuffs ]=-=-=-=-= //
-
-void setup() {
-    size(600, 600, P2D);
-    gui = new LazyGui(this); // init LazyGui
-
-    //calculate with the initial values
-    polygonVertices = calculateShape(polygonVertices);
-    guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
-}
-
-void draw() {
-    scale(-1, -1);
-    background(30);
-    handleGui(gui);
-    translate(originOffset.x, originOffset.y); // set originOffset (0,0) to the middle of the screen
-
-    // recalculate when values changes
-    if (gui.hasChanged("radialSubdivision") || gui.hasChanged("scaleFactor") || gui.hasChanged("originOffset")) {
-        polygonVertices.clear();
-        polygonVertices = calculateShape(polygonVertices);
-    }
-
-    if (gui.hasChanged("matrixDensity")) {
-        guidePoints.clear();
-        guidePoints = calculateGuidePoints(guidePoints, origin, evenMatrix,matrixDensity);
-    }
-
-
-    for (int i = 0; i < polygonVertices.size(); i++) {
-        point vert_i = polygonVertices.get(i); //current point
-        point vert_j = polygonVertices.get((i+1) % polygonVertices.size()); // next point
-
-        // show edges
-        stroke(100, 179, 100);
-        strokeWeight(2);
-        line(vert_i.x, vert_i.y, vert_j.x, vert_j.y);
-
-        // show segments
-        stroke(100, 100, 200);
-        strokeWeight(1);
-        line(0, 0, vert_j.x, vert_j.y);
-
-        // show vertices
-        stroke(0, 255, 0);
-        strokeWeight(7);
-        point(vert_i.x, vert_i.y);
-    }
-
-    // draw logic
-    stroke(255, 0, 0);
-    strokeWeight(5);
-    point(0, 0); // mark origin
-
-    stroke(255, 255, 255);
-    strokeWeight(2);
-    noFill();
-    for (int i = 0; i < guidePoints.size(); i++) {
-        point curr = guidePoints.get(i);
-        drawPattern(curr, int(testPattern));
-    }
-
-    gui.draw(); // draw the GUI
+// method to draw a pattern (might change this in the future)
+void drawCell(unitCell center) {
+	float dick = 1; //magic value: i call this dick cus i insert it anywhere it fits
+	switch (center.patternId) {
+		case 0:
+			pattern.Point(center, matrixDensity/dick);
+			break;
+		case 1:
+			pattern.circle(center, matrixDensity/dick);
+			break;
+		case 2:
+			pattern.connectedUp(center, matrixDensity/dick);
+			break;
+		case 3:
+			pattern.connectedDown(center, matrixDensity/dick);
+			break;
+		case 4:
+			pattern.connectedLeft(center, matrixDensity/dick);
+			break;
+		case 5:
+			pattern.connectedRight(center, matrixDensity/dick);
+			break;
+		case 6:
+			pattern.catEars_bottomLeft(center, matrixDensity/dick);
+			break;
+		case 7:
+			pattern.catEars_bottomRight(center, matrixDensity/dick);
+			break;
+		case 8:
+			pattern.catEars_topLeft(center, matrixDensity/dick);
+			break;
+		case 9:
+			pattern.catEars_topRight(center, matrixDensity/dick);
+			break;
+		case 10:
+			pattern.eyeHorizontal(center, matrixDensity/dick);
+			break;
+		case 11:
+			pattern.eyeVertical(center, matrixDensity/dick);
+			break;
+		case 12:
+			pattern.bottomPizzaSlice(center, matrixDensity/dick);
+			break;
+		case 13:
+			pattern.topPizzaSlice(center, matrixDensity/dick);
+			break;
+		case 14:
+			pattern.leftPizzaSlice(center, matrixDensity/dick);
+			break;
+		case 15:
+			pattern.rightPizzaSlice(center, matrixDensity/dick);
+			break;
+		case 16:
+			pattern.diamond(center, matrixDensity/dick);
+			break;
+		default:
+			break;
+	}
 }

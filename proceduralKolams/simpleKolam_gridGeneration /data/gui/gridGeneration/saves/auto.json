@@ -706,23 +706,11 @@
               "type": "VALUE"
             }
           ],
-          "window": {
-            "posX": 379.00003,
-            "posY": 352.0,
-            "closed": true,
-            "windowSizeX": 220.0
-          },
           "className": "FolderNode",
           "path": "options/mouse",
           "type": "FOLDER"
         }
       ],
-      "window": {
-        "posX": 308.0,
-        "posY": 352.0,
-        "closed": true,
-        "windowSizeX": 198.0
-      },
       "className": "FolderNode",
       "path": "options",
       "type": "FOLDER"
@@ -785,16 +773,6 @@
         },
         {
           "className": "SaveItemNode",
-          "path": "saves/1",
-          "type": "TRANSIENT"
-        },
-        {
-          "className": "SaveItemNode",
-          "path": "saves/2",
-          "type": "TRANSIENT"
-        },
-        {
-          "className": "SaveItemNode",
           "path": "saves/auto",
           "type": "TRANSIENT"
         }
@@ -804,24 +782,10 @@
       "type": "FOLDER"
     },
     {
-      "valueFloat": 0.0,
-      "valueFloatPrecision": 1.0,
-      "className": "SliderNode",
-      "path": "testPattern",
-      "type": "VALUE"
-    },
-    {
-      "valueFloat": 27.0,
+      "valueFloat": 10.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "matrixDensity",
-      "type": "VALUE"
-    },
-    {
-      "valueFloat": 6.0,
-      "valueFloatPrecision": 1.0,
-      "className": "SliderNode",
-      "path": "radialSubdivision",
       "type": "VALUE"
     },
     {
@@ -832,14 +796,14 @@
           "type": "TRANSIENT"
         },
         {
-          "valueFloat": 295.0,
+          "valueFloat": 226.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/x",
           "type": "VALUE"
         },
         {
-          "valueFloat": 159.0,
+          "valueFloat": 279.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/y",
@@ -847,45 +811,13 @@
         }
       ],
       "window": {
-        "posX": 286.0,
-        "posY": 330.0,
+        "posX": 445.00003,
+        "posY": 374.0,
         "closed": false,
         "windowSizeX": 154.0
       },
       "className": "PlotFolderNode",
       "path": "originOffset",
-      "type": "FOLDER"
-    },
-    {
-      "children": [
-        {
-          "className": "PlotDisplayNode",
-          "path": "scaleFactor/_",
-          "type": "TRANSIENT"
-        },
-        {
-          "valueFloat": 125.0,
-          "valueFloatPrecision": 1.0,
-          "className": "SliderNode",
-          "path": "scaleFactor/x",
-          "type": "VALUE"
-        },
-        {
-          "valueFloat": 125.0,
-          "valueFloatPrecision": 1.0,
-          "className": "SliderNode",
-          "path": "scaleFactor/y",
-          "type": "VALUE"
-        }
-      ],
-      "window": {
-        "posX": 308.0,
-        "posY": 352.0,
-        "closed": true,
-        "windowSizeX": 154.0
-      },
-      "className": "PlotFolderNode",
-      "path": "scaleFactor",
       "type": "FOLDER"
     },
     {
@@ -900,8 +832,8 @@
     }
   ],
   "window": {
-    "posX": 44.0,
-    "posY": 330.0,
+    "posX": 220.0,
+    "posY": 374.0,
     "closed": false,
     "windowSizeX": 220.0
   },
