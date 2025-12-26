@@ -41,7 +41,7 @@ void setup(){
 }
 
 void handleGui(LazyGui gui){
-	matrixDensity = gui.slider("matrixDensity", matrixDensity, 0, 100);
+	matrixDensity = gui.slider("matrixDensity", matrixDensity, 15, 100);
 	originOffset  = gui.plotXY("originOffset", width /2, height/2);
 
 	if (gui.button("resetValues")) {
@@ -89,40 +89,14 @@ void depthFirst(){
 
 		for (unitCell next : neighbours) {
 			if (next.inBounds() && next.notIn(unitCells)) {
-				stack.push(next);
+				if (containedIn(next,polygonVertices)) {
+					stack.push(next);
+				}
 			}
 		}
 	}
 }
 
-void breadthFirst(){
-	unitCells.clear();
-	unitCell start =  new unitCell(origin.x, origin.y, 0);
-
-	queue.add(start);
-
-	while (!queue.isEmpty()) {
-		unitCell curr = queue.poll();
-
-		// if (containedIn(curr, polygonVertices)) {
-		// 	unitCells.add(curr);
-		// }
-		unitCells.add(curr);
-
-		unitCell[] neighbours = {
-			new unitCell(curr.x , curr.y + matrixDensity, 0),
-			new unitCell(curr.x + matrixDensity, curr.y , 0),
-			new unitCell(curr.x , curr.y - matrixDensity, 0),
-			new unitCell(curr.x - matrixDensity, curr.y , 0)
-		};
-
-		for (unitCell next : neighbours) {
-			if (next.inBounds() && next.notIn(unitCells)) {
-				queue.add(next);
-			}
-		}
-	}
-}
 
 void draw(){
 	//basic setup
@@ -138,12 +112,10 @@ void draw(){
 
 	if (gui.hasChanged("matrixDensity")) {
 		depthFirst();
-		// breadthFirst();
 	}
 
 	for (unitCell u : unitCells){
 		if (containedIn(u,polygonVertices)) {
-			println("entered red");
 			stroke(255,50,50);
 		}else {
 			stroke(255,255,255);

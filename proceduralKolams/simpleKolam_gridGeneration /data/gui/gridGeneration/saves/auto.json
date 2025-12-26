@@ -782,8 +782,8 @@
       "type": "FOLDER"
     },
     {
-      "valueFloat": 10.0,
-      "valueFloatPrecision": 1.0,
+      "valueFloat": 33.60000228881836,
+      "valueFloatPrecision": 0.1,
       "className": "SliderNode",
       "path": "matrixDensity",
       "type": "VALUE"
@@ -796,23 +796,23 @@
           "type": "TRANSIENT"
         },
         {
-          "valueFloat": 226.0,
-          "valueFloatPrecision": 1.0,
+          "valueFloat": 300.0,
+          "valueFloatPrecision": 1.0E-4,
           "className": "SliderNode",
           "path": "originOffset/x",
           "type": "VALUE"
         },
         {
-          "valueFloat": 279.0,
-          "valueFloatPrecision": 1.0,
+          "valueFloat": 300.0,
+          "valueFloatPrecision": 1.0E-4,
           "className": "SliderNode",
           "path": "originOffset/y",
           "type": "VALUE"
         }
       ],
       "window": {
-        "posX": 445.00003,
-        "posY": 374.0,
+        "posX": 440.0,
+        "posY": 264.0,
         "closed": false,
         "windowSizeX": 154.0
       },
@@ -832,8 +832,8 @@
     }
   ],
   "window": {
-    "posX": 220.0,
-    "posY": 374.0,
+    "posX": 198.0,
+    "posY": 264.0,
     "closed": false,
     "windowSizeX": 220.0
   },

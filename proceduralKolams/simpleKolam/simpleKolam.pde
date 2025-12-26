@@ -8,13 +8,15 @@ import java.util.List;
 LazyGui gui;
 
 // =-=-=-=-=-=[ variables ]=-=-=-=-= //
-int nf = 0;
-int nt = 0;
+
+int boundryValue = 300;
 final point origin = new point(0,0);
 
 
 // =-=-=-=-=-=[ boolean variables ]=-=-=-=-= //
 volatile boolean compute = false;
+
+boolean evenMatrix = false;
 
 boolean showPolygon = true;
 boolean showSection = true;
@@ -33,10 +35,12 @@ PVector scaleFactor;
 // =-=-=-=-=-=[ Objects ]=-=-=-=-= //
 final Object mutex = new Object();
 patterns pattern = new patterns();
-ArrayList<point> polygonVertices =  new ArrayList<point>();
+ArrayDeque<unitCell> stack =  new ArrayDeque<unitCell>();
 
+ArrayList<point> polygonVertices =  new ArrayList<point>();
 ArrayList<unitCell> unitCells = new ArrayList<unitCell>();
-ArrayList<unitCell> frameBuffer = new ArrayList<unitCell>();
+
+// ArrayList<unitCell> frameBuffer = new ArrayList<unitCell>();
 
 // =-=-=-=-=-=[ Jobs ]=-=-=-=-= //
 void setup(){
@@ -50,7 +54,6 @@ void calculate(){
 	while (true) {
 		if (compute) {
 			println("calculating");
-			int count = 0;
 			synchronized (mutex){
 				println("calculation thread aquired mutex lock");
 				// step 1: Calculate polygon
@@ -63,36 +66,31 @@ void calculate(){
 				}
 
 				// step 2: Generate UnitCells
-				Queue<unitCell> q = new ArrayDeque<unitCell>();
+				unitCells.clear();
+				unitCell start = evenMatrix ?  new unitCell(origin.x, origin.y, int(testPattern)) :
+					new unitCell(origin.x + matrixDensity/2, origin.y + matrixDensity/2, int(testPattern));
 
-				unitCell start = new unitCell(origin.x, origin.y,0);
+				stack.push(start);
 
-				q.add(start);
+				while (!stack.isEmpty()) {
+					unitCell curr = stack.pop();
 
-				while (!q.isEmpty()) {
-					unitCell curr = q.poll();
-
-					if (!containedIn(curr, polygonVertices)) continue;
-
-					unitCells.clear();
 					unitCells.add(curr);
 
-					unitCell[] neighbors = {
-						new unitCell(curr.x, curr.y + matrixDensity,0),
-						new unitCell(curr.x + matrixDensity, curr.y,0),
-						new unitCell(curr.x, curr.y - matrixDensity,0),
-						new unitCell(curr.x - matrixDensity, curr.y,0)
+					unitCell[] neighbours = {
+						new unitCell(curr.x , curr.y + matrixDensity, int(testPattern)),
+						new unitCell(curr.x + matrixDensity, curr.y , int(testPattern)),
+						new unitCell(curr.x , curr.y - matrixDensity, int(testPattern)),
+						new unitCell(curr.x - matrixDensity, curr.y , int(testPattern))
 					};
 
-					// using critical section from calculation thread
-					for (unitCell u: neighbors) {
-						if (notIn(u,unitCells)) {
-							count ++;
-							q.add(u);
+					for (unitCell next : neighbours) {
+						if (next.inBounds() && next.notIn(unitCells)) {
+							if (containedIn(next,polygonVertices)) {
+								stack.push(next);
+							}
 						}
 					}
-					println(count);
-					count = 0;
 				}
 				
 				// step 3: Generate pattern
@@ -109,6 +107,7 @@ void handleGui(LazyGui gui){
 	testPattern = gui.slider("testPattern", testPattern, 0, 16);
 	matrixDensity = gui.slider("matrixDensity", matrixDensity, 0, 100);
 	radialSubdivision = gui.slider("radialSubdivision", radialSubdivision, 0, 10);
+	evenMatrix = gui.toggle("evenMatrix",evenMatrix);
 
 	originOffset  = gui.plotXY("originOffset", width /2, height/2);
 	scaleFactor  = gui.plotXY("scaleFactor", 50, 50);
@@ -128,6 +127,9 @@ void handleGui(LazyGui gui){
 
 		scaleFactor.set(50,50);
 		gui.plotSet("scaleFactor",50,50);
+
+		evenMatrix = false;
+		gui.toggleSet("evenMatrix", false);
 	}
 
 	if (gui.button("stop")) {
@@ -137,7 +139,9 @@ void handleGui(LazyGui gui){
 	// calculate everytime a value changes using shared variable
 	if (gui.hasChanged("radialSubdivision") ||
 		gui.hasChanged("scaleFactor") || 
-		gui.hasChanged("matrixDensity")){
+		gui.hasChanged("matrixDensity") ||
+		gui.hasChanged("evenMatrix") ||
+		gui.hasChanged("testPattern")){
 
 		compute = true;
 		println("set compute flag");
@@ -206,9 +210,18 @@ class unitCell extends point{
 		this.patternId = id;
 	}
 
-	public boolean isEqual(unitCell another){
-		if (this.patternId == another.patternId && this.x == another.x && this.y ==  another.y) {return true;}
-		return false;
+	public boolean notIn(ArrayList<unitCell> UnitCells){
+		for (unitCell u : UnitCells){
+			if (u.x == this.x && u.y == this.y) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean inBounds() {
+		return this.x >= -boundryValue && this.x <= boundryValue &&
+			this.y >= -boundryValue && this.y <= boundryValue;
 	}
 }
 
@@ -216,57 +229,36 @@ class unitCell extends point{
 
 // raycasting to check if the point is in the polygon
 boolean isInBetween(float y, float y1, float y2){
-	if (y1 > y2) {
-		return y <= y1 && y > y2;
-	} else {
-		return y <= y2 && y > y1;
-	}
+    return (y > min(y1, y2)) && (y <= max(y1, y2));
 }
 
-point getIntersection(point rayPoint, point a, point b){
-	point pointOfIntersection = new point(a.x, rayPoint.y);
-	try {
-		float slope = (b.y - a.y)/(b.x -a.x);
-		pointOfIntersection.y = rayPoint.y;
-		pointOfIntersection.x = ((pointOfIntersection.y - a.y)/slope)+a.x;
-		return pointOfIntersection;
-	}
-	catch (ArithmeticException e) {
-		println("encountered arithmetic exception");
-		return pointOfIntersection;
-	}
+point getIntersection(unitCell rayPoint, point a, point b){
+    // ray is horizontal → y is known
+    float x =
+        a.x + (rayPoint.y - a.y) *
+        (b.x - a.x) / (b.y - a.y);
+
+    return new point(x, rayPoint.y);
 }
 
-boolean containedIn(point guidePoint, ArrayList<point> polygon){
-	int count = 0;
-	for (int i = 0; i < polygon.size(); i++) {
+boolean containedIn(unitCell guidePoint, ArrayList<point> polygon){
+    int count = 0;
 
-		point vert_a = polygon.get(i); //current point
-		point vert_b = polygon.get((i+1) % polygon.size()); // next point
+    for (int i = 0; i < polygon.size(); i++) {
+        point a = polygon.get(i);
+        point b = polygon.get((i + 1) % polygon.size());
 
-		if (vert_a.x != vert_b.x && isInBetween(guidePoint.y, vert_a.y, vert_b.y)) {
-			point pointOfIntersection = getIntersection(guidePoint, vert_a, vert_b);
-			if (pointOfIntersection.x > guidePoint.x) {
-				count ++;
-			}
-		}
-	}
+        // skip horizontal edges
+        if (a.y == b.y) continue;
 
-	if (count % 2 == 0) {return false;};
-	return true;
+        if (isInBetween(guidePoint.y, a.y, b.y)) {
+            point p = getIntersection(guidePoint, a, b);
+            if (p.x > guidePoint.x) count++;
+        }
+    }
+
+    return (count & 1) == 1;
 }
-
-boolean notIn(unitCell curr, List<unitCell> UnitCells){
-	for (unitCell UnitCell: UnitCells){
-		nf ++;
-		println("num of false: " + nf);
-		if (UnitCell.isEqual(curr)) {return false;} 
-	}
-	nt ++;
-	println("num of true: " + nt);
-	return true;
-}
-
 
 // method to draw a pattern (might change this in the future)
 void drawCell(unitCell center) {

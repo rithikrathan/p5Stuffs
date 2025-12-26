@@ -1,6 +1,7 @@
 class patterns {
 	void Point(unitCell center, float matrixDensity){
-		strokeWeight(12);
+		stroke(255,255,255);
+		strokeWeight(4);
 		point(center.x, center.y);
 	}
 
