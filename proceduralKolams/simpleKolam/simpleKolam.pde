@@ -34,7 +34,7 @@ PVector scaleFactor;
 
 // =-=-=-=-=-=[ Objects ]=-=-=-=-= //
 final Object mutex = new Object();
-patterns pattern = new patterns();
+patterns pattern = new patterns(4,255,255,255);
 ArrayDeque<unitCell> stack =  new ArrayDeque<unitCell>();
 
 ArrayList<point> polygonVertices =  new ArrayList<point>();
@@ -262,7 +262,7 @@ boolean containedIn(unitCell guidePoint, ArrayList<point> polygon){
 
 // method to draw a pattern (might change this in the future)
 void drawCell(unitCell center) {
-	float dick = 1; //magic value: i call this dick cus i insert it anywhere it fits
+	float dick = 2; //magic value: i call this dick cus i insert it anywhere it fits
 	switch (center.patternId) {
 		case 0:
 			pattern.Point(center, matrixDensity/dick);

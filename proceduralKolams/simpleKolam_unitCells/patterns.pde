@@ -1,10 +1,11 @@
-class patterns {
+class pattern {
 	int StrokeWeight;
 	int Stroke_R;
 	int Stroke_G;
 	int Stroke_B;
+	private float pscale = 3;
 
-	patterns(int weight,int r,int g,int b){
+	pattern(int weight,int r,int g,int b){
 		this.StrokeWeight = weight;
 		this.Stroke_R = r;
 		this.Stroke_G = g;
@@ -12,92 +13,112 @@ class patterns {
 	}
 
 
-	void Point(unitCell center, float matrixDensity){
+	void Point(point center, float matrixDensity){
 		stroke(255,255,255);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void circle(unitCell center, float matrixDensity) {
+	void circle(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
-		ellipse(center.x, center.y, matrixDensity/1.4, matrixDensity/1.4);
-		strokeWeight(StrokeWeight);
+		ellipse(center.x, center.y, matrixDensity/0.7, matrixDensity/0.7);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void connectedUp(unitCell center, float matrixDensity) {
-		stroke(Stroke_R,Stroke_G,Stroke_B);
-		line(center.x, center.y+matrixDensity, center.x + matrixDensity/2, center.y);
-		line(center.x, center.y+matrixDensity, center.x - matrixDensity/2, center.y);
-		arc(center.x, center.y, matrixDensity, matrixDensity, PI, TAU);
-		strokeWeight(StrokeWeight);
+	void connectedUp(point center, float matrixDensity) {
+		float radius = 100; // works only if radius < matrixDensity
+		float phi = matrixDensity - radius;
+		//calculate the shape using the radius
+		line(center.x - radius, 0, center.x - radius,  center.y + phi);
+		line(center.x, matrixDensity, center.x - radius,  center.y + phi);
+		line(center.x + radius, 0, center.x + radius,  center.y + phi);
+		line(center.x, matrixDensity, center.x + radius,  center.y + phi);
+		arc(center.x, center.y, radius * 2 , radius * 2, radians(180), radians(360));
+
+		strokeWeight(StrokeWeight* pscale);
 		point(center.x, center.y);
 	}
 
-	void connectedDown(unitCell center, float matrixDensity) {
-		stroke(Stroke_R,Stroke_G,Stroke_B);
-		line(center.x, center.y-matrixDensity, center.x + matrixDensity/2, center.y);
-		line(center.x, center.y-matrixDensity, center.x - matrixDensity/2, center.y);
-		arc(center.x, center.y, matrixDensity, matrixDensity, 0, PI);
-		strokeWeight(StrokeWeight);
+	void connectedDown(point center, float matrixDensity) {
+		float radius = 100; // works only if radius < matrixDensity
+		float phi = matrixDensity - radius;
+		//calculate the shape using the radius
+		line(center.x - radius, 0, center.x - radius,  center.y - phi);
+		line(center.x, -matrixDensity, center.x - radius,  center.y - phi);
+		line(center.x + radius, 0, center.x + radius,  center.y - phi);
+		line(center.x, -matrixDensity, center.x + radius,  center.y - phi);
+		arc(center.x, center.y, radius * 2 , radius * 2, radians(0), radians(180));
+
+		strokeWeight(StrokeWeight* pscale);
 		point(center.x, center.y);
 	}
 
-	void connectedLeft(unitCell center, float matrixDensity) {
-		stroke(Stroke_R,Stroke_G,Stroke_B);
-		line(center.x+matrixDensity, center.y, center.x, center.y+ matrixDensity/2);
-		line(center.x+matrixDensity, center.y, center.x, center.y- matrixDensity/2);
-		arc(center.x, center.y, matrixDensity, matrixDensity, PI/2, 3*PI/2);
-		strokeWeight(StrokeWeight);
+	void connectedLeft(point center, float matrixDensity) {
+		float radius = 100; // works only if radius < matrixDensity
+		float phi = matrixDensity - radius;
+		//calculate the shape using the radius
+		line(center.x, -radius, center.x -phi,  center.y - radius);
+		line(-matrixDensity, 0, center.x - phi,  center.y - radius);
+		line(center.x, radius, center.x -phi,  center.y + radius);
+		line(-matrixDensity, 0, center.x - phi,  center.y + radius);
+		arc(center.x, center.y, radius * 2 , radius * 2, radians(270), radians(450));
+
+		strokeWeight(StrokeWeight* pscale);
 		point(center.x, center.y);
 	}
 
-	void connectedRight(unitCell center, float matrixDensity) {
-		stroke(Stroke_R,Stroke_G,Stroke_B);
-		line(center.x-matrixDensity, center.y, center.x, center.y+ matrixDensity/2);
-		line(center.x-matrixDensity, center.y, center.x, center.y- matrixDensity/2);
-		arc(center.x, center.y, matrixDensity, matrixDensity, -HALF_PI, PI/2);
-		strokeWeight(StrokeWeight);
+	void connectedRight(point center, float matrixDensity) {
+		float radius = 100; // works only if radius < matrixDensity
+		float phi = matrixDensity - radius;
+		//calculate the shape using the radius
+		line(center.x, radius, center.x +phi,  center.y + radius);
+		line(matrixDensity, 0, center.x + phi,  center.y + radius);
+		line(center.x, -radius, center.x +phi,  center.y - radius);
+		line(matrixDensity, 0, center.x + phi,  center.y - radius);
+		arc(center.x, center.y, radius * 2 , radius * 2, radians(90), radians(270));
+
+		strokeWeight(StrokeWeight* pscale);
 		point(center.x, center.y);
 	}
 
-	void catEars_bottomLeft(unitCell center, float matrixDensity) {
+	void catEars_bottomLeft(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		point arCenter = new point(matrixDensity/2,-matrixDensity/2);
 		arc(arCenter.x, arCenter.y, matrixDensity*sqrt(2), matrixDensity*sqrt(2), PI/4, 5*PI/4);
 		line(center.x, center.y-matrixDensity, center.x + matrixDensity, center.y);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void catEars_bottomRight(unitCell center, float matrixDensity) {
+	void catEars_bottomRight(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		point arCenter = new point(-matrixDensity/2,-matrixDensity/2);
 		arc(arCenter.x, arCenter.y, matrixDensity*sqrt(2), matrixDensity*sqrt(2),-HALF_PI+QUARTER_PI, PI-QUARTER_PI);
 		line(center.x, center.y-matrixDensity, center.x - matrixDensity, center.y);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void catEars_topLeft(unitCell center, float matrixDensity) {
+	void catEars_topLeft(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		point arCenter = new point(matrixDensity/2,matrixDensity/2);
 		arc(arCenter.x, arCenter.y, matrixDensity*sqrt(2), matrixDensity*sqrt(2),PI-QUARTER_PI, TAU-QUARTER_PI);
 		line(center.x, center.y+matrixDensity, center.x + matrixDensity, center.y);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void catEars_topRight(unitCell center, float matrixDensity) {
+	void catEars_topRight(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		point arCenter = new point(-matrixDensity/2,matrixDensity/2);
 		arc(arCenter.x, arCenter.y, matrixDensity*sqrt(2), matrixDensity*sqrt(2),QUARTER_PI+PI,TAU+QUARTER_PI);
 		line(center.x, center.y+matrixDensity, center.x - matrixDensity, center.y);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void eyeHorizontal(unitCell center, float matrixDensity) {
+	void eyeHorizontal(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		float tipDist = 2 * matrixDensity;
 		float R = sqrt(2) * matrixDensity;   
@@ -112,11 +133,11 @@ class patterns {
 		arc(center.x + d, center.y,
 				R*2, R*2,
 				PI - theta, PI + theta);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void eyeVertical(unitCell center, float matrixDensity) {
+	void eyeVertical(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		float tipDist = 2 * matrixDensity;
 		float R = sqrt(2) * matrixDensity;
@@ -131,53 +152,53 @@ class patterns {
 		arc(center.x, center.y + d,
 				R*2, R*2,
 				-HALF_PI - theta, -HALF_PI + theta);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void bottomPizzaSlice(unitCell center, float matrixDensity) {
+	void bottomPizzaSlice(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		line(center.x, center.y-matrixDensity, center.x + matrixDensity, center.y);
 		line(center.x, center.y-matrixDensity, center.x - matrixDensity, center.y);
 		arc(center.x, center.y, matrixDensity*2, matrixDensity*2, 0, PI);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void topPizzaSlice(unitCell center, float matrixDensity) {
+	void topPizzaSlice(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		line(center.x, center.y+matrixDensity, center.x + matrixDensity, center.y);
 		line(center.x, center.y+matrixDensity, center.x - matrixDensity, center.y);
 		arc(center.x, center.y, matrixDensity*2, matrixDensity*2, PI, TAU);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void leftPizzaSlice(unitCell center, float matrixDensity) {
+	void leftPizzaSlice(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		line(center.x+matrixDensity, center.y, center.x, center.y+ matrixDensity);
 		line(center.x+matrixDensity, center.y, center.x, center.y- matrixDensity);
 		arc(center.x, center.y, matrixDensity*2, matrixDensity*2, PI/2, 3*PI/2);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 
-	void rightPizzaSlice(unitCell center, float matrixDensity) {
+	void rightPizzaSlice(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		line(center.x-matrixDensity, center.y, center.x, center.y+ matrixDensity);
 		line(center.x-matrixDensity, center.y, center.x, center.y- matrixDensity);
 		arc(center.x, center.y, matrixDensity*2, matrixDensity*2, -HALF_PI, PI/2);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight *pscale);
 		point(center.x, center.y);
 	}
 
-	void diamond(unitCell center, float matrixDensity) {
+	void diamond(point center, float matrixDensity) {
 		stroke(Stroke_R,Stroke_G,Stroke_B);
 		line(center.x-matrixDensity, center.y, center.x, center.y+ matrixDensity);
 		line(center.x-matrixDensity, center.y, center.x, center.y- matrixDensity);
 		line(center.x+matrixDensity, center.y, center.x, center.y+ matrixDensity);
 		line(center.x+matrixDensity, center.y, center.x, center.y- matrixDensity);
-		strokeWeight(StrokeWeight);
+		strokeWeight(StrokeWeight * pscale);
 		point(center.x, center.y);
 	}
 }
