@@ -782,48 +782,96 @@
       "type": "FOLDER"
     },
     {
-      "valueFloat": 3.0,
+      "valueFloat": 1500.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
-      "path": "patternId",
+      "path": "Duration (ms)",
+      "type": "VALUE"
+    },
+    {
+      "valueFloat": 1000.0,
+      "valueFloatPrecision": 1.0,
+      "className": "SliderNode",
+      "path": "Morph Time (ms)",
       "type": "VALUE"
     },
     {
       "children": [
         {
-          "className": "PlotDisplayNode",
-          "path": "originOffset/_",
+          "valueBoolean": false,
+          "className": "ToggleNode",
+          "path": "Controls/Auto Loop Mode",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 8.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderNode",
+          "path": "Controls/Manual Pattern ID",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 500.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Controls/Duration (ms)",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 250.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Controls/Morph Time (ms)",
+          "type": "VALUE"
+        },
+        {
+          "children": [
+            {
+              "className": "PlotDisplayNode",
+              "path": "Controls/Origin Offset/_",
+              "type": "TRANSIENT"
+            },
+            {
+              "valueFloat": 300.0,
+              "valueFloatPrecision": 1.0,
+              "className": "SliderNode",
+              "path": "Controls/Origin Offset/x",
+              "type": "VALUE"
+            },
+            {
+              "valueFloat": 300.0,
+              "valueFloatPrecision": 1.0,
+              "className": "SliderNode",
+              "path": "Controls/Origin Offset/y",
+              "type": "VALUE"
+            }
+          ],
+          "className": "PlotFolderNode",
+          "path": "Controls/Origin Offset",
+          "type": "FOLDER"
+        },
+        {
+          "valueFloat": 145.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderNode",
+          "path": "Controls/Matrix Density",
+          "type": "VALUE"
+        },
+        {
+          "className": "ButtonNode",
+          "path": "Controls/Reset Values",
           "type": "TRANSIENT"
-        },
-        {
-          "valueFloat": 306.0,
-          "valueFloatPrecision": 1.0,
-          "className": "SliderNode",
-          "path": "originOffset/x",
-          "type": "VALUE"
-        },
-        {
-          "valueFloat": 193.0,
-          "valueFloatPrecision": 1.0,
-          "className": "SliderNode",
-          "path": "originOffset/y",
-          "type": "VALUE"
         }
       ],
       "window": {
-        "posX": 396.0,
-        "posY": 374.0,
+        "posX": 379.00003,
+        "posY": 396.0,
         "closed": true,
-        "windowSizeX": 154.0
+        "windowSizeX": 220.0
       },
-      "className": "PlotFolderNode",
-      "path": "originOffset",
+      "className": "FolderNode",
+      "path": "Controls",
       "type": "FOLDER"
-    },
-    {
-      "className": "ButtonNode",
-      "path": "resetValues",
-      "type": "TRANSIENT"
     },
     {
       "className": "ButtonNode",
@@ -835,7 +883,7 @@
     "posX": 176.0,
     "posY": 396.0,
     "closed": false,
-    "windowSizeX": 220.0
+    "windowSizeX": 198.0
   },
   "className": "FolderNode",
   "path": "",

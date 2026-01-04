@@ -1,0 +1,385 @@
+import com.krab.lazy.*;
+import java.util.ArrayList;
+
+LazyGui gui;
+
+// =-=-=-=-=-=[ Configuration ]=-=-=-=-= //
+final point origin = new point(0,0);
+PVector originOffset;
+float patternIdSliderValue; 
+float matrixDensity = 145;
+
+// =-=-=-=-=-=[ Animation State ]=-=-=-=-= //
+boolean isLooping = false;
+int currentPatternIdx = 0;
+int nextPatternIdx = 1;
+int totalPatterns = 17;
+
+long lastTime;
+float transitionProgress = 0.0;
+int state = 0; // 0 = STATIC, 1 = TRANSITIONING
+
+// Timings
+int durationStatic = 1000; 
+int durationMorph = 1000;   
+
+// =-=-=-=-=-=[ Morphing Buffers ]=-=-=-=-= //
+// We hold the shape data as lists of vectors
+ArrayList<PVector> currentShape = new ArrayList<PVector>();
+ArrayList<PVector> nextShape = new ArrayList<PVector>();
+ShapeBuilder builder = new ShapeBuilder();
+int VERTEX_COUNT = 400; // Resolution of the warp (Higher = smoother curves)
+
+void setup(){
+    size(600,600,P2D);
+    gui = new LazyGui(this);
+    lastTime = millis();
+    
+    gui.sliderSet("Duration (ms)", durationStatic);
+    gui.sliderSet("Morph Time (ms)", durationMorph);
+    
+    // Initialize shapes
+    updateShapes();
+}
+
+void draw(){
+    background(10);
+    
+    handleGui(gui);
+    updateAnimationState();
+    
+    pushMatrix();
+    translate(originOffset.x, originOffset.y);
+    scale(1, -1); 
+    
+    drawBoundary();
+    
+    // THE MORPH DRAWING
+    drawMorphingShape();
+    
+    popMatrix();
+    
+    gui.draw();
+}
+
+void handleGui(LazyGui gui){
+    gui.pushFolder("Controls");
+    
+    boolean prevLoop = isLooping;
+    isLooping = gui.toggle("Auto Loop Mode", isLooping);
+    
+    // Manual Slider Control
+    if(!isLooping){
+       float oldVal = patternIdSliderValue;
+       patternIdSliderValue = gui.slider("Manual Pattern ID", patternIdSliderValue, 0, totalPatterns - 1);
+       currentPatternIdx = int(patternIdSliderValue);
+       
+       // If slider moved manually, force an update
+       if(oldVal != patternIdSliderValue) {
+           updateShapes(); 
+           transitionProgress = 0; // Snap to shape
+       }
+    } else {
+       gui.sliderSet("Manual Pattern ID", currentPatternIdx);
+       pushStyle(); fill(255); textSize(14); textAlign(LEFT, TOP);
+       text(">> Auto-Looping Active", 10, 20); popStyle();
+    }
+    
+    durationStatic = gui.sliderInt("Duration (ms)", durationStatic, 100, 5000);
+    durationMorph = gui.sliderInt("Morph Time (ms)", durationMorph, 100, 3000);
+    
+    originOffset  = gui.plotXY("Origin Offset", width/2, height/2);
+    float oldDens = matrixDensity;
+    matrixDensity = gui.slider("Matrix Density", matrixDensity, 50, 300);
+    if(oldDens != matrixDensity) updateShapes(); // Re-calc points if size changes
+
+    if (gui.button("Reset Values")) {
+        currentPatternIdx = 0;
+        nextPatternIdx = 1;
+        state = 0;
+        transitionProgress = 0;
+        updateShapes();
+    }
+    
+    gui.popFolder();
+}
+
+void updateAnimationState() {
+  if (!isLooping) return;
+
+  long currentTime = millis();
+  long deltaTime = currentTime - lastTime;
+
+  if (state == 0) { // STATIC
+    transitionProgress = 0.0;
+    if (deltaTime > durationStatic) {
+      state = 1; 
+      lastTime = currentTime;
+      // Prepare the next shape target
+      updateShapes();
+    }
+  } else if (state == 1) { // MORPHING
+    transitionProgress = constrain((float)deltaTime / (float)durationMorph, 0.0, 1.0);
+    
+    if (deltaTime >= durationMorph) {
+      state = 0; 
+      currentPatternIdx = nextPatternIdx;
+      nextPatternIdx = (currentPatternIdx + 1) % totalPatterns;
+      lastTime = currentTime;
+      transitionProgress = 0.0;
+      // Commit the morph: Current becomes what Next was
+      updateShapes(); 
+    }
+  }
+}
+
+// Generate the vector lists for the From and To shapes
+void updateShapes() {
+    currentShape = builder.createShape(currentPatternIdx, matrixDensity, VERTEX_COUNT);
+    nextShape = builder.createShape(nextPatternIdx, matrixDensity, VERTEX_COUNT);
+}
+
+void drawMorphingShape() {
+    noFill();
+    stroke(255);
+    strokeWeight(4); // Thicker lines look better for warps
+    
+    // Calculate Easing (SmoothStep)
+    float t = transitionProgress;
+    float ease = t * t * (3 - 2 * t);
+    
+    beginShape();
+    // Interpolate every single vertex
+    for (int i = 0; i < VERTEX_COUNT; i++) {
+        if(i >= currentShape.size() || i >= nextShape.size()) break;
+        
+        PVector p1 = currentShape.get(i);
+        PVector p2 = nextShape.get(i);
+        
+        // Lerp: The core calculation of the warp
+        float x = lerp(p1.x, p2.x, ease);
+        float y = lerp(p1.y, p2.y, ease);
+        
+        vertex(x, y);
+    }
+    endShape();
+    
+    // Optional: Draw the "Points" (dots) on top to emphasize vertices
+    strokeWeight(8);
+    beginShape(POINTS);
+    for (int i = 0; i < VERTEX_COUNT; i += 10) { // Draw every 10th point
+         PVector p1 = currentShape.get(i);
+         PVector p2 = nextShape.get(i);
+         vertex(lerp(p1.x, p2.x, ease), lerp(p1.y, p2.y, ease));
+    }
+    endShape();
+}
+
+void drawBoundary(){
+    noFill(); strokeWeight(2); stroke(0,80,0);
+    line(0,0,0,150); line(0,0,150,0); line(0,0,0,-150); line(0,0,-150,0);
+}
+
+class ShapeBuilder {
+    ArrayList<PVector> buffer;
+    
+    // Main entry point
+    ArrayList<PVector> createShape(int id, float d, int totalPoints) {
+        buffer = new ArrayList<PVector>();
+        point c = new point(0,0); // Center
+        
+        // 1. Generate Raw Geometry (Lines/Arcs)
+        // We just run the logic, but addPoints instead of line()
+        switch (id) {
+            case 0: addPointShape(c, d); break;
+            case 1: addCircle(c, d); break;
+            case 2: connectedUp(c, d); break;
+            case 3: connectedDown(c, d); break;
+            case 4: connectedLeft(c, d); break;
+            case 5: connectedRight(c, d); break;
+            case 6: catEars_bottomLeft(c, d); break;
+            case 7: catEars_bottomRight(c, d); break;
+            case 8: catEars_topLeft(c, d); break;
+            case 9: catEars_topRight(c, d); break;
+            case 10: eyeHorizontal(c, d); break;
+            case 11: eyeVertical(c, d); break;
+            case 12: bottomPizzaSlice(c, d); break;
+            case 13: topPizzaSlice(c, d); break;
+            case 14: leftPizzaSlice(c, d); break;
+            case 15: rightPizzaSlice(c, d); break;
+            case 16: diamond(c, d); break;
+        }
+        
+        // 2. Resample to Fixed Resolution
+        // This ensures the point count matches perfectly for morphing
+        return resample(buffer, totalPoints);
+    }
+    
+    // -- Resampling Logic --
+    ArrayList<PVector> resample(ArrayList<PVector> original, int targetCount) {
+        if(original.size() < 2) return original;
+        
+        // Calculate total length
+        float totalLen = 0;
+        for(int i=0; i<original.size()-1; i++) {
+            totalLen += original.get(i).dist(original.get(i+1));
+        }
+        
+        float step = totalLen / (float)(targetCount - 1);
+        ArrayList<PVector> result = new ArrayList<PVector>();
+        
+        float currentDist = 0;
+        result.add(original.get(0).copy()); // First point
+        
+        int idx = 0;
+        float distAccumulator = 0;
+        
+        // Walk the path
+        for(int i=1; i<targetCount; i++) {
+            float targetDist = i * step;
+            
+            while(distAccumulator + original.get(idx).dist(original.get(idx+1)) < targetDist) {
+                distAccumulator += original.get(idx).dist(original.get(idx+1));
+                idx++;
+                if(idx >= original.size()-1) break;
+            }
+            
+            if(idx >= original.size()-1) {
+                result.add(original.get(original.size()-1).copy());
+            } else {
+                // Lerp between the two surrounding points
+                float segmentLen = original.get(idx).dist(original.get(idx+1));
+                float remaining = targetDist - distAccumulator;
+                float amt = remaining / segmentLen;
+                result.add(PVector.lerp(original.get(idx), original.get(idx+1), amt));
+            }
+        }
+        return result;
+    }
+
+    // -- Primitive Generators --
+    
+    void addLine(float x1, float y1, float x2, float y2) {
+        buffer.add(new PVector(x1, y1));
+        buffer.add(new PVector(x2, y2));
+    }
+    
+    void addArc(float cx, float cy, float w, float h, float startAng, float endAng) {
+        int res = 30; // Points per arc
+        for(int i=0; i<=res; i++) {
+            float t = map(i, 0, res, startAng, endAng);
+            buffer.add(new PVector(cx + (w/2)*cos(t), cy + (h/2)*sin(t)));
+        }
+    }
+    
+    void addPointShape(point c, float d) {
+        // A point is just a tiny circle
+        addArc(c.x, c.y, d*0.2, d*0.2, 0, TAU);
+    }
+    
+    void addCircle(point c, float d) {
+        addArc(c.x, c.y, d/0.7, d/0.7, 0, TAU);
+    }
+
+    // -- Shape Logic (Copied from your code, adapted to vector math) --
+    
+    void connectedUp(point c, float d) {
+        float r = d * 0.75; float phi = d - r;
+        addLine(c.x-r, c.y, c.x-r, c.y+phi); 
+        addLine(c.x-r, c.y+phi, c.x, c.y+d); // Connected nicely
+        addLine(c.x, c.y+d, c.x+r, c.y+phi); 
+        addLine(c.x+r, c.y+phi, c.x+r, c.y); 
+        addArc(c.x, c.y, r*2, r*2, PI, TWO_PI);
+    }
+    void connectedDown(point c, float d) {
+        float r = d * 0.75; float phi = d - r;
+        addLine(c.x-r, c.y, c.x-r, c.y-phi);
+        addLine(c.x-r, c.y-phi, c.x, c.y-d);
+        addLine(c.x, c.y-d, c.x+r, c.y-phi);
+        addLine(c.x+r, c.y-phi, c.x+r, c.y);
+        addArc(c.x, c.y, r*2, r*2, 0, PI);
+    }
+    void connectedLeft(point c, float d) {
+        float r = d * 0.75; float phi = d - r;
+        addLine(c.x, c.y-r, c.x-phi, c.y-r);
+        addLine(c.x-phi, c.y-r, c.x-d, c.y);
+        addLine(c.x-d, c.y, c.x-phi, c.y+r);
+        addLine(c.x-phi, c.y+r, c.x, c.y+r);
+        addArc(c.x, c.y, r*2, r*2, PI+HALF_PI, PI+HALF_PI+PI);
+    }
+    void connectedRight(point c, float d) {
+        float r = d * 0.75; float phi = d - r;
+        addLine(c.x, c.y+r, c.x+phi, c.y+r);
+        addLine(c.x+phi, c.y+r, c.x+d, c.y);
+        addLine(c.x+d, c.y, c.x+phi, c.y-r);
+        addLine(c.x+phi, c.y-r, c.x, c.y-r);
+        addArc(c.x, c.y, r*2, r*2, HALF_PI, PI+HALF_PI);
+    }
+    
+    void diamond(point c, float d) {
+        addLine(c.x, c.y+d, c.x+d, c.y);
+        addLine(c.x+d, c.y, c.x, c.y-d);
+        addLine(c.x, c.y-d, c.x-d, c.y);
+        addLine(c.x-d, c.y, c.x, c.y+d);
+    }
+
+    void catEars_bottomLeft(point c, float d) {
+        addLine(c.x+d, c.y, c.x, c.y+d);
+        addLine(c.x+d, c.y, c.x+d/2, c.y-d/2);
+        addLine(c.x-d/2, c.y+d/2, c.x, c.y+d);
+        addArc(c.x, c.y, d*sqrt(2), d*sqrt(2), radians(135), radians(315));
+    }
+    void catEars_bottomRight(point c, float d) {
+        addLine(c.x-d, c.y, c.x, c.y+d);
+        addLine(c.x-d, c.y, c.x-d/2, c.y-d/2);
+        addLine(c.x+d/2, c.y+d/2, c.x, c.y+d);
+        addArc(c.x, c.y, d*sqrt(2), d*sqrt(2), radians(225), radians(405));
+    }
+    void catEars_topLeft(point c, float d) {
+        addLine(c.x+d, c.y, c.x, c.y-d);
+        addLine(c.x+d, c.y, c.x+d/2, c.y+d/2);
+        addLine(c.x-d/2, c.y-d/2, c.x, c.y-d);
+        addArc(c.x, c.y, d*sqrt(2), d*sqrt(2), radians(45), radians(225));
+    }
+    void catEars_topRight(point c, float d) {
+        addLine(c.x-d, c.y, c.x, c.y-d);
+        addLine(c.x-d, c.y, c.x-d/2, c.y+d/2);
+        addLine(c.x+d/2, c.y-d/2, c.x, c.y-d);
+        addArc(c.x, c.y, d*sqrt(2), d*sqrt(2), radians(315), radians(495));
+    }
+    
+    void eyeHorizontal(point c, float d) {
+        addArc(c.x, c.y+d, d*2*sqrt(2), d*2*sqrt(2), radians(225), radians(315));
+        addArc(c.x, c.y-d, d*2*sqrt(2), d*2*sqrt(2), radians(45), radians(135));
+    }
+    void eyeVertical(point c, float d) {
+        addArc(c.x-d, c.y, d*2*sqrt(2), d*2*sqrt(2), radians(315), radians(405));
+        addArc(c.x+d, c.y, d*2*sqrt(2), d*2*sqrt(2), radians(135), radians(225));
+    }
+    
+    void bottomPizzaSlice(point c, float d) {
+        addLine(c.x, c.y-d, c.x+d, c.y); 
+        addLine(c.x-d, c.y, c.x, c.y-d);
+        addArc(c.x, c.y-d, d*2*sqrt(2), d*2*sqrt(2), radians(45), radians(135));
+    }
+    void topPizzaSlice(point c, float d) {
+        addLine(c.x, c.y+d, c.x+d, c.y); 
+        addLine(c.x-d, c.y, c.x, c.y+d);
+        addArc(c.x, c.y+d, d*2*sqrt(2), d*2*sqrt(2), radians(225), radians(315));
+    }
+    void leftPizzaSlice(point c, float d) {
+        addLine(c.x-d, c.y, c.x, c.y+d); 
+        addLine(c.x-d, c.y, c.x, c.y-d);
+        addArc(c.x-d, c.y, d*2*sqrt(2), d*2*sqrt(2), radians(315), radians(405));
+    }
+    void rightPizzaSlice(point c, float d) {
+        addLine(c.x+d, c.y, c.x, c.y+d); 
+        addLine(c.x+d, c.y, c.x, c.y-d);
+        addArc(c.x+d, c.y, d*2*sqrt(2), d*2*sqrt(2), radians(135), radians(225));
+    }
+}
+
+class point {
+    float x, y;
+    point(float x, float y){ this.x = x; this.y = y; }
+}

@@ -1,0 +1,4 @@
+int[] not_rc_u_bc = { 5, 7, 8, 12 };
+int[] rc_u_not_bc = { 3, 6, 10, 14 };
+int[] rc_u_bc = { 9, 13, 15, 16 };
+int[] not_rc_u_not_bc = { 0, 1, 2, 4, 11 };
