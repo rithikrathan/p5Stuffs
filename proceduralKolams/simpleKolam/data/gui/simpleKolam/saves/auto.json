@@ -811,7 +811,7 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 46.0,
+      "valueFloat": 27.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "matrixDensity",
@@ -825,7 +825,7 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 69392.0,
+      "valueFloat": 69420.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "randomSeed",
@@ -857,14 +857,14 @@
           "type": "TRANSIENT"
         },
         {
-          "valueFloat": 305.0,
+          "valueFloat": 300.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/x",
           "type": "VALUE"
         },
         {
-          "valueFloat": 299.0,
+          "valueFloat": 300.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/y",
@@ -889,14 +889,14 @@
           "type": "TRANSIENT"
         },
         {
-          "valueFloat": 280.0,
+          "valueFloat": 150.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "scaleFactor/x",
           "type": "VALUE"
         },
         {
-          "valueFloat": 280.0,
+          "valueFloat": 150.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "scaleFactor/y",
@@ -904,13 +904,145 @@
         }
       ],
       "window": {
-        "posX": 308.0,
-        "posY": 220.0,
+        "posX": 286.0,
+        "posY": 110.0,
         "closed": true,
         "windowSizeX": 154.0
       },
       "className": "PlotFolderNode",
       "path": "scaleFactor",
+      "type": "FOLDER"
+    },
+    {
+      "children": [
+        {
+          "valueFloat": 1.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 0",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 1",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 2",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 3",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 4",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 5",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 6",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 7",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 8",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 9",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 10",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 11",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 12",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 13",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 14",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 15",
+          "type": "VALUE"
+        },
+        {
+          "valueFloat": 10.0,
+          "valueFloatPrecision": 1.0,
+          "className": "SliderIntNode",
+          "path": "Pattern Weights/Pattern 16",
+          "type": "VALUE"
+        }
+      ],
+      "window": {
+        "posX": 264.0,
+        "posY": 154.0,
+        "closed": false,
+        "windowSizeX": 198.0
+      },
+      "className": "FolderNode",
+      "path": "Pattern Weights",
       "type": "FOLDER"
     },
     {
@@ -925,8 +1057,8 @@
     }
   ],
   "window": {
-    "posX": 176.0,
-    "posY": 176.0,
+    "posX": 22.0,
+    "posY": 154.0,
     "closed": false,
     "windowSizeX": 220.0
   },
