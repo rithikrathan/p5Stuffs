@@ -27,7 +27,7 @@ ArrayList<complex> dft(ArrayList<complex> Xn){
 		temp_k.im = temp_k.im / N;
 		temp_k.Amplitude = sqrt(temp_k.re *  temp_k.re + temp_k.im * temp_k.im);
 		temp_k.Phase = atan2(temp_k.im,temp_k.re);
-		temp_k.Frequency = (k);
+		temp_k.Frequency = k;
 
 		Xk.add(temp_k);
 	}
