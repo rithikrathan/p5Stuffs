@@ -811,7 +811,7 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 27.0,
+      "valueFloat": 30.260007858276367,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "matrixDensity",
@@ -825,8 +825,8 @@
       "type": "VALUE"
     },
     {
-      "valueFloat": 69420.0,
-      "valueFloatPrecision": 1.0,
+      "valueFloat": 69609.0546875,
+      "valueFloatPrecision": 0.1,
       "className": "SliderNode",
       "path": "randomSeed",
       "type": "VALUE"
@@ -857,14 +857,14 @@
           "type": "TRANSIENT"
         },
         {
-          "valueFloat": 300.0,
+          "valueFloat": 298.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/x",
           "type": "VALUE"
         },
         {
-          "valueFloat": 300.0,
+          "valueFloat": 157.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderNode",
           "path": "originOffset/y",
@@ -872,8 +872,8 @@
         }
       ],
       "window": {
-        "posX": 352.0,
-        "posY": 330.0,
+        "posX": 374.0,
+        "posY": 308.0,
         "closed": true,
         "windowSizeX": 154.0
       },
@@ -916,130 +916,130 @@
     {
       "children": [
         {
-          "valueFloat": 1.0,
-          "valueFloatPrecision": 1.0,
+          "valueFloat": 0.0,
+          "valueFloatPrecision": 0.1,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 0",
+          "path": "Pattern Weights/Point",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 2.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 1",
+          "path": "Pattern Weights/Circle",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 4.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 2",
+          "path": "Pattern Weights/Connected Left",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 4.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 3",
+          "path": "Pattern Weights/Connected Right",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 4.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 4",
+          "path": "Pattern Weights/Connected Top",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 4.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 5",
+          "path": "Pattern Weights/Connected Bottom",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 3.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 6",
+          "path": "Pattern Weights/Eye Horizontal",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 3.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 7",
+          "path": "Pattern Weights/Eye Vertical",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 7.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 8",
+          "path": "Pattern Weights/CatEars_Top_Left",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 7.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 9",
+          "path": "Pattern Weights/CatEars_Top_Right",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 7.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 10",
+          "path": "Pattern Weights/CatEars_Bottom_Left",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 7.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 11",
+          "path": "Pattern Weights/CatEars_Bottom_Right",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 9.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 12",
+          "path": "Pattern Weights/Left_Pizza_Slice",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 9.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 13",
+          "path": "Pattern Weights/Right_Pizza_Slice",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 9.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 14",
+          "path": "Pattern Weights/Top_Pizza_Slice",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 9.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 15",
+          "path": "Pattern Weights/Bottom_Pizza_Slice",
           "type": "VALUE"
         },
         {
-          "valueFloat": 10.0,
+          "valueFloat": 6.0,
           "valueFloatPrecision": 1.0,
           "className": "SliderIntNode",
-          "path": "Pattern Weights/Pattern 16",
+          "path": "Pattern Weights/Diamond",
           "type": "VALUE"
         }
       ],
       "window": {
-        "posX": 264.0,
-        "posY": 154.0,
+        "posX": 308.0,
+        "posY": 198.0,
         "closed": false,
-        "windowSizeX": 198.0
+        "windowSizeX": 242.0
       },
       "className": "FolderNode",
       "path": "Pattern Weights",
@@ -1054,13 +1054,18 @@
       "className": "ButtonNode",
       "path": "stop",
       "type": "TRANSIENT"
+    },
+    {
+      "className": "ButtonNode",
+      "path": "refresh",
+      "type": "TRANSIENT"
     }
   ],
   "window": {
     "posX": 22.0,
-    "posY": 154.0,
+    "posY": 247.00002,
     "closed": false,
-    "windowSizeX": 220.0
+    "windowSizeX": 264.0
   },
   "className": "FolderNode",
   "path": "",

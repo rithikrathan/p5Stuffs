@@ -7,6 +7,9 @@ import java.util.List;
 LazyGui gui;
 PGraphics pg;
 
+final int rcl = 0b11110010101001000; // Right Connection List
+final int bcl = 0b11011001110100000; // Bottom Connection List
+
 int boundryValue = 300;
 int winWidth = 600;
 int winHeight = 600;
@@ -32,7 +35,6 @@ float matrixDensity = 27;
 float radialSubdivision = 6;
 float Seed = 69420;
 
-// Priority Weights for the 17 patterns (0-16)
 int[] patternWeights = new int[17];
 
 PVector originOffset;
@@ -47,11 +49,9 @@ void setup(){
     pixelDensity(pDensity);
     gui =  new LazyGui(this);
     pg = createGraphics(winWidth, winHeight, P2D);
-    // Note: randomSeed is now called inside calculate()
 }
 
 void calculate(){
-    // FIX: Reset seed here so patterns are consistent every calculation
     randomSeed((long) Seed);
 
     // step 1: Calculate polygon
@@ -170,18 +170,16 @@ boolean bitMasking(int bin, int mask){
 }
 
 void setPattern(unitCell u){
-    int rcl = 0b11110010101001000;
-    int bcl = 0b11011001110100000;
     u.patternMask = 0b1 << u.patternId;
     u.rightConnection = bitMasking(rcl,u.patternMask);
     u.bottomConnection = bitMasking(bcl, u.patternMask);
 }
 
-// NEW: Weighted Random Pattern Selection
+// --- NEW SMART RANDOMNESS LOGIC ---
 int getRandomPattern(int bitList){
     ArrayList<Integer> validCandidates = new ArrayList<Integer>();
     
-    // 1. Find which patterns fit the neighbors
+    // 1. Find which patterns fit the neighbors (PAST)
     for (int i = 0; i < 17; i++) {
         if(((bitList >> i) & 1) == 1){
             validCandidates.add(i);
@@ -190,14 +188,41 @@ int getRandomPattern(int bitList){
 
     if (validCandidates.size() == 0) return -1; 
 
-    // 2. Calculate Total Weight of VALID candidates
-    int totalWeight = 0;
+    // 2. Calculate Total Weight with "Flow Logic" (FUTURE)
+    float totalWeight = 0;
+    float[] dynamicWeights = new float[17];
+
     for (int id : validCandidates) {
-        totalWeight += patternWeights[id];
+        // Start with the base weight from GUI
+        float w = (float)patternWeights[id]; 
+
+        // Check Future Connections (Right and Bottom)
+        int hasRight = (rcl >> id) & 1;
+        int hasBottom = (bcl >> id) & 1;
+        int futureConnections = hasRight + hasBottom;
+
+        if (futureConnections == 1) {
+            // BEST CASE: Extends the path (Snake-like).
+            // Boost probability significantly (x5)
+            w *= 5.0; 
+        } 
+        else if (futureConnections == 2) {
+            // SOLID CASE: Connects everywhere (Potential Tessel blob).
+            // Reduce probability (x0.5)
+            w *= 0.5; 
+        } 
+        else {
+            // DEAD END: No future connections (Island).
+            // Nuke probability (x0.01) so it only happens if forced.
+            w *= 0.01; 
+        }
+        
+        dynamicWeights[id] = w;
+        totalWeight += w;
     }
 
-    // Edge case: If all valid weights are 0, pick randomly
-    if (totalWeight == 0) {
+    // Edge case: If all weights are 0 (or effectively 0), pick randomly
+    if (totalWeight <= 0.001) {
         return validCandidates.get((int)random(validCandidates.size()));
     }
 
@@ -205,7 +230,7 @@ int getRandomPattern(int bitList){
     float randomValue = random(totalWeight);
 
     for (int id : validCandidates) {
-        randomValue -= patternWeights[id];
+        randomValue -= dynamicWeights[id];
         if (randomValue <= 0) {
             return id;
         }
@@ -253,11 +278,30 @@ void handleGui(LazyGui gui){
     scaleFactor  = gui.plotXY("scaleFactor", 150, 150);
 
     // --- WEIGHTS FOLDER ---
+	String[] patternNames = {
+		"Point",
+		"Circle",
+		"Connected Left",
+		"Connected Right",
+		"Connected Top",
+		"Connected Bottom",
+		"Eye Horizontal",
+		"Eye Vertical",
+		"CatEars_Top_Left",
+		"CatEars_Top_Right",
+		"CatEars_Bottom_Left",
+		"CatEars_Bottom_Right",
+		"Left_Pizza_Slice",
+		"Right_Pizza_Slice",
+		"Top_Pizza_Slice",
+		"Bottom_Pizza_Slice",
+		"Diamond"
+	};
     gui.pushFolder("Pattern Weights");
     boolean weightsChanged = false;
     for(int i=0; i<17; i++){
         // Default weight is 5, Range is 0 to 10
-        String pName = "Pattern " + i;
+        String pName = patternNames[i];
         patternWeights[i] = gui.sliderInt(pName, 5, 0, 10);
         
         if(gui.hasChanged("Pattern Weights/" + pName)){
@@ -296,6 +340,12 @@ void handleGui(LazyGui gui){
 
     if (gui.button("stop")) {
         exit();
+    }
+
+    if (gui.button("refresh")) {
+        compute = true;
+        redraw = true;
+		println("refreshed");
     }
 
     if (gui.hasChanged("radialSubdivision") ||
