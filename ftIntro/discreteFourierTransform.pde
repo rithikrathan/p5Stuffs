@@ -3,7 +3,6 @@ ArrayList<complex> dft(ArrayList<complex> Xn){
 	ArrayList<complex> Xk = new ArrayList<complex>();
 
 	// int m; //  *i believe* this "m" is the range of frequencies
-	
 	// if (N % 2 == 0) {
 	// 	m = N/2;
 	// } else{

@@ -1,12 +1,22 @@
 // -=-=-=-=-=-=-=-=[ GLOBALS ]=-=-=-=-=-=-=-=-
 ArrayList<complex> Xk = new ArrayList<complex>();
-ArrayList<complex> Xn = new ArrayList<complex>(); // Stores the original Blue Square
+ArrayList<complex> Xn = new ArrayList<complex>(); // Stores the original Blue Shape
 ArrayList<PVector> path = new ArrayList<PVector>(); // Stores the Green Trail
+
+// TOGGLE THIS TO ENABLE/DISABLE EXPORT
+boolean export = true; 
+boolean showRef = true;
+int sortType = 2;
 
 float time;
 float dt;
-int trailLength = 50; // Determines how long the tail is
-					   
+int trailLength = 650; 
+int resolution = -1;
+float speedMultiplier = 0.4;
+float digScale = 1.3;
+
+String jsonName = "diagrams/yoni.json"; 
+
 public class complex {
     float re, im, Phase, Frequency, Amplitude;
     complex(float x, float y){ this.re = x; this.im = y; }
@@ -20,37 +30,49 @@ public class complex {
 
 // -=-=-=-=-=-=-=-=[ SETUP ]=-=-=-=-=-=-=-=-
 void setup(){
-	frameRate(60);
+    frameRate(60);
     size(600,600);
     time = 0;
 
-	// A Heart Shape (50 points)
-	float[] x = {
-	  0.0, 0.3, 2.6, 8.5, 18.9, 34.2, 53.9, 76.5, 100.1, 122.3, 
-	  141.0, 153.9, 159.8, 157.8, 148.3, 132.2, 111.5, 88.3, 64.9, 43.6, 
-	  26.0, 13.1, 5.0, 1.1, 0.0, -0.0, -1.1, -5.0, -13.1, -26.0, 
-	  -43.6, -64.9, -88.3, -111.5, -132.2, -148.3, -157.8, -159.8, -153.9, -141.0, 
-	  -122.3, -100.1, -76.5, -53.9, -34.2, -18.9, -8.5, -2.6, -0.3, -0.0
-	};
+    // CHANGE: Load a single JSONObject instead of a JSONArray
+    // The file structure is now: { "name": "...", "points": [...] }
+    JSONObject json = loadJSONObject(jsonName);
+    
+    // We access the points array directly from the root object
+    JSONArray points = json.getJSONArray("points");
+    
+    println("Loading Shape: " + json.getString("name"));
 
-	float[] y = {
-	  50.0, 53.3, 62.6, 76.2, 91.3, 105.2, 115.2, 119.2, 116.2, 106.2, 
-	  90.1, 69.4, 46.1, 21.6, -2.6, -25.8, -47.9, -68.8, -88.8, -107.8, 
-	  -125.7, -141.6, -154.9, -164.4, -169.4, -169.4, -164.4, -154.9, -141.6, -125.7, 
-	  -107.8, -88.8, -68.8, -47.9, -25.8, -2.6, 21.6, 46.1, 69.4, 90.1, 
-	  106.2, 116.2, 119.2, 115.2, 105.2, 91.3, 76.2, 62.6, 53.3, 50.0
-	};    
-	
-	// Populate Xn (The Input)
-    for (int i = 0; i < x.length; i++) {
-        Xn.add(new complex(x[i], y[i]));
+    // Parse JSON into Complex Numbers
+    for (int i = 0; i < points.size(); i++) {
+        JSONObject p = points.getJSONObject(i);
+        float x = p.getFloat("x");
+        float y = p.getFloat("y");
+        Xn.add(new complex(x, y));
     }
 
-    Xk = dft(Xn); // Calls your existing DFT function
+    // The rest of the logic remains exactly the same
+    Xk = dft(Xn); 
     
     // Sort by Amplitude
-    Xk.sort((a, b) -> Float.compare(b.Amplitude, a.Amplitude));
+	switch (sortType) {
+		case 0:
+			println("Unsorted");
+			break;
+		case 1:
+			println("Sorted ascending order");
+			Xk.sort((a, b) -> Float.compare(a.Amplitude, b.Amplitude));
+			break;
 
+		case 2:
+			println("Sorted decending order");
+			Xk.sort((a, b) -> Float.compare(b.Amplitude, a.Amplitude));
+			break;
+
+		default:
+			break;
+	}
+    println("List size: " + Xk.size());
     dt = TAU / Xk.size();
 }
 
@@ -60,71 +82,148 @@ void draw(){
     translate(300,300);
     scale(1,-1); 
 
+    // 0. Draw Axes (Added Feature)
+    drawAxes();
+
     // 1. Draw BLUE Reference
-    noFill();
-    stroke(0, 0, 255);
-    strokeWeight(2);
-    beginShape();
-    for (complex c : Xn) {
-        vertex(c.re, c.im);
-    }
-    if (Xn.size() > 0) vertex(Xn.get(0).re, Xn.get(0).im);
-    endShape();
+	if (showRef) {
+		noFill();
+		stroke(0, 0, 255);
+		strokeWeight(2);
+		beginShape();
+		for (complex c : Xn) {
+			vertex(c.re * digScale, c.im * digScale);
+		}
+		if (Xn.size() > 0) vertex(Xn.get(0).re, Xn.get(0).im);
+		endShape();
+	}
 
     // 2. Draw Epicycles
-    PVector tip = drawEpicycles(0,0,1,time,Xk);
+    PVector tip = drawEpicycles(0,0,digScale,time,Xk);
     
     // 3. Draw GREEN Trail (Fading)
     path.add(tip);
-    
-    // Remove the oldest point if the path gets too long
     if (path.size() > trailLength) {
         path.remove(0);
     }
-    
+
     strokeWeight(3);
     noFill();
-    
-    // Draw individual lines so we can change alpha (opacity) for each one
     for (int i = 0; i < path.size() - 1; i++) {
         PVector p1 = path.get(i);
         PVector p2 = path.get(i+1);
-        // Map 'i' (position in list) to transparency (0 to 255)
-        // Oldest points (index 0) are transparent, Newest (index size) are opaque
         float alpha = map(i, 0, path.size(), 0, 255);
         stroke(0, 255, 0, alpha);
         line(p1.x, p1.y, p2.x, p2.y);
     }
     
-    time += dt* 0.2; 
+    time += dt * speedMultiplier; 
 
-	if (time >= TAU) {
+    if (time >= TAU) {
+		if (export) {
+			println("stopped exporting");
+			export = false;
+		}
         time -= TAU; 
     }
+    
+    // EXPORT FRAMES ONLY IF boolean export IS TRUE
+    if (export) {
+        saveFrame("videoFrames/frame-######.png");
+    }
+}
+
+// -=-=-=-=-=-=-=-=[ HELPER FUNCTIONS ]=-=-=-=-=-=-=-=-
+
+void drawAxes() {
+    stroke(100);     // Grey color for axes
+    strokeWeight(1); // Thin line
+    fill(100);
+    
+    float axisLen = 280; // Length from center
+    
+    // DRAW LINES
+    line(-axisLen, 0, axisLen, 0); // Real Axis (X)
+    line(0, -axisLen, 0, axisLen); // Imaginary Axis (Y)
+    
+    // DRAW ARROWS
+    float arrowSize = 6;
+    
+    // +Re Arrow (Right)
+    pushMatrix();
+    translate(axisLen, 0);
+    triangle(0, 0, -arrowSize, -arrowSize/2, -arrowSize, arrowSize/2);
+    popMatrix();
+
+    // -Re Arrow (Left)
+    pushMatrix();
+    translate(-axisLen, 0);
+    triangle(0, 0, arrowSize, -arrowSize/2, arrowSize, arrowSize/2);
+    popMatrix();
+    
+    // +Im Arrow (Top - remember Y is positive up due to scale(1,-1))
+    pushMatrix();
+    translate(0, axisLen);
+    triangle(0, 0, -arrowSize/2, -arrowSize, arrowSize/2, -arrowSize);
+    popMatrix();
+
+    // -Im Arrow (Bottom)
+    pushMatrix();
+    translate(0, -axisLen);
+    triangle(0, 0, -arrowSize/2, arrowSize, arrowSize/2, arrowSize);
+    popMatrix();
+
+    // DRAW LABELS
+    // We must un-flip the text so it is readable
+    pushMatrix();
+    scale(1, -1); // Invert Y back for text rendering
+    
+    textSize(14);
+    fill(150);
+    textAlign(CENTER, CENTER);
+    
+    // Because we flipped Y back, 'up' is now negative Y in this local matrix
+    text("+Re", axisLen - 20, 20);      // Right
+    text("-Re", -axisLen + 20, 20);     // Left
+    text("+Im", 20, -axisLen + 20);     // Top (Note negative Y coord)
+    text("-Im", 20, axisLen - 20);      // Bottom (Note positive Y coord)
+    
+    popMatrix();
 }
 
 PVector drawEpicycles(float x, float y, float scale, float time, ArrayList<complex> Xk){
     float prevX = x;  
     float prevY = y;  
 
-    for (complex epicycle : Xk) {
-		// if (epicycle.Frequency < Xk.size()) {
-		if (epicycle.Frequency < Xk.size()) {
-			float currX = prevX + epicycle.Amplitude * scale * cos(epicycle.Frequency * time + epicycle.Phase);
-			float currY = prevY + epicycle.Amplitude * scale * sin(epicycle.Frequency * time + epicycle.Phase);
-
-			stroke(255, 150); 
-			strokeWeight(2);
-			noFill();
-			circle(prevX, prevY, epicycle.Amplitude * 2);
-			stroke(255, 150);
-			line(prevX,prevY, currX, currY);
-			prevX = currX;
-			prevY = currY;
-		}
+    if (resolution == -1) {
+        resolution = Xk.size();
     }
-	stroke(0,255,0);
-	strokeWeight(12);
-	point(prevX,prevY);
+
+    for (complex epicycle : Xk) {
+        float freq = epicycle.Frequency;
+
+        if (freq > Xk.size() / 2) {
+            freq -= Xk.size();
+        }
+
+        if (freq < resolution ) {
+            float currX = prevX + epicycle.Amplitude * scale * cos(freq * time + epicycle.Phase);
+            float currY = prevY + epicycle.Amplitude * scale * sin(freq * time + epicycle.Phase);
+            stroke(255, 90); 
+            strokeWeight(2); // Made circles slightly thinner
+            noFill();
+            circle(prevX, prevY, epicycle.Amplitude * 2 * scale);
+            stroke(255, 90);
+            line(prevX,prevY, currX, currY);
+            strokeWeight(4);
+            point(currX, currY); // Small point at joint
+            
+            prevX = currX;
+            prevY = currY;
+        }
+    }
+    stroke(0,255,0);
+    strokeWeight(8);
+    point(prevX,prevY);
     return new PVector(prevX, prevY);
 }
