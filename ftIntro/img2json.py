@@ -2,22 +2,25 @@ import cv2
 import numpy as np
 import json
 import os
+import sys
+
+# --- INCREASE RECURSION LIMIT ---
+# DFS on images requires a high recursion limit or it will crash
+sys.setrecursionlimit(50000)
 
 # --- DEFAULT SETTINGS ---
 INPUT_DIR = './imgStuffs/monochrome/'
 OUTPUT_DIR = "diagrams"
-DEFAULT_RESOLUTION = 12
+DEFAULT_RESOLUTION = 5
 DEFAULT_RADIUS = 200
 # ----------------
 
 
 def get_user_input():
-    # 1. Check directory
     if not os.path.exists(INPUT_DIR):
         print(f"Error: Directory '{INPUT_DIR}' does not exist.")
         return None, None, None, None
 
-    # 2. List Files
     files = [f for f in os.listdir(INPUT_DIR) if f.lower().endswith(
         ('.png', '.jpg', '.jpeg', '.bmp'))]
     files.sort()
@@ -30,7 +33,6 @@ def get_user_input():
     for i, f in enumerate(files):
         print(f"[{i}] {f}")
 
-    # 3. Get File Index
     while True:
         try:
             choice = input(f"\nEnter file index (0-{len(files)-1}): ")
@@ -44,64 +46,117 @@ def get_user_input():
             print("Please enter a number.")
 
     image_path = os.path.join(INPUT_DIR, selected_file)
-
-    # 4. Get JSON Name
-    # Default to the filename without extension
     default_name = os.path.splitext(selected_file)[0]
     json_name = input(f"Enter Output Name [default: {default_name}]: ").strip()
     if not json_name:
         json_name = default_name
 
-    # 5. Get Resolution
-    res_input = input(f"Enter Resolution (higher = less detail) [default: {
+    res_input = input(f"Enter Resolution [default: {
                       DEFAULT_RESOLUTION}]: ").strip()
     resolution = int(res_input) if res_input.isdigit() else DEFAULT_RESOLUTION
 
     return image_path, json_name, resolution, DEFAULT_RADIUS
 
 
-def main():
-    # --- INTERACTIVE PROMPT ---
-    img_path, json_name_out, res, target_rad = get_user_input()
+def build_graph(points):
+    """
+    Converts a list of pixels into a graph (Adjacency Dictionary).
+    Key: (x, y)
+    Value: List of neighbor (x, y) tuples
+    """
+    print("Building adjacency graph...")
+    point_set = set(map(tuple, points))
+    graph = {pt: [] for pt in point_set}
 
+    # Check 8 neighbors for every point
+    # (Optimized by only checking points that actually exist)
+    for x, y in point_set:
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = x + dx, y + dy
+                if (nx, ny) in point_set:
+                    graph[(x, y)].append((nx, ny))
+    return graph
+
+
+def dfs_trace(current, graph, visited, path):
+    """
+    Depth First Search that effectively traces the skeleton.
+    If it hits a dead end, the recursion naturally unwinds (backtracks),
+    which effectively simulates the pen moving back along the line.
+    """
+    visited.add(current)
+    path.append(current)
+
+    # Sort neighbors to prefer a specific direction (optional, but helps consistency)
+    # Here we sort to prioritize continuing in the same general direction if possible,
+    # but simple coordinate sorting is stable enough.
+    neighbors = sorted(graph[current])
+
+    for neighbor in neighbors:
+        if neighbor not in visited:
+            dfs_trace(neighbor, graph, visited, path)
+            # KEY FIX: If we return from a recursion, it means we hit a dead end
+            # and came back. We add 'current' to the path AGAIN.
+            # This creates the "retracing" effect so the line is continuous
+            # instead of jumping.
+            path.append(current)
+
+
+def main():
+    img_path, json_name_out, res, target_rad = get_user_input()
     if img_path is None:
-        return  # Exit if setup failed
+        return
 
     print(f"\nProcessing: {img_path}")
-    print(f"Output: {json_name_out}.json | Res: {res} | Radius: {target_rad}")
-    print("-" * 30)
 
-    # 1. Load Image
+    # 1. Load & Threshold
     img = cv2.imread(img_path, 0)
     if img is None:
-        print(f"Error: Could not load image.")
         return
 
-    # 2. Extract Contours
     _, thresh = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(
-        thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if np.mean(thresh) > 127:
+        thresh = cv2.bitwise_not(thresh)
 
-    if not contours:
-        print("Error: No contours found (Image might be all black or all white).")
+    # 2. Get Pixels
+    ys, xs = np.nonzero(thresh)
+    points = np.column_stack((xs, ys))
+
+    if len(points) == 0:
+        print("Error: Image empty.")
         return
 
-    # Flatten contours
-    points = []
-    for contour in contours:
-        for point in contour:
-            points.append(point[0])
+    # 3. Build Graph
+    graph = build_graph(points)
 
-    total_pixels = len(points)
-    print(f"Found {total_pixels} pixels via contours.")
+    # 4. Trace Paths (DFS)
+    visited = set()
+    full_ordered_path = []
 
-    # 3. Apply Resolution
-    ordered_points = points[::res]
-    print(f"Downsampled to {len(ordered_points)} points.")
+    # Sort starting points (Top-Left to Bottom-Right) to handle separate words
+    all_nodes = sorted(list(graph.keys()), key=lambda k: (k[1], k[0]))
 
-    # 4. Center the shape
-    x_vals = [float(p[0]) for p in ordered_points]
-    y_vals = [float(p[1]) for p in ordered_points]
+    print("Tracing paths with DFS (Backtracking enabled)...")
+
+    for node in all_nodes:
+        if node not in visited:
+            # Start a new stroke (e.g., new word)
+            # If we already have points, this is a "Pen Up" jump to the next word.
+            # Since JSON format is single-line, this jump is unavoidable between separate words,
+            # but DFS ensures NO jumps inside the word itself.
+            dfs_trace(node, graph, visited, full_ordered_path)
+
+    # 5. Downsample
+    # We downsample the FINAL path, which includes the backtracks.
+    final_points = full_ordered_path[::res]
+    print(f"Path generated with {len(final_points)} points.")
+
+    # 6. Center & Scale
+    x_vals = [float(p[0]) for p in final_points]
+    y_vals = [float(p[1]) for p in final_points]
 
     center_x = sum(x_vals) / len(x_vals)
     center_y = sum(y_vals) / len(y_vals)
@@ -109,27 +164,23 @@ def main():
     x_centered = [x - center_x for x in x_vals]
     y_centered = [y - center_y for y in y_vals]
 
-    # 5. Scale to fit Target Radius
     max_dist = 0
     for i in range(len(x_centered)):
         dist = np.sqrt(x_centered[i]**2 + y_centered[i]**2)
         if dist > max_dist:
             max_dist = dist
-
     if max_dist == 0:
         max_dist = 1
 
     scale_factor = target_rad / max_dist
-    print(f"Scaling factor applied: {scale_factor:.4f}")
 
     formatted_points = []
     for x, y in zip(x_centered, y_centered):
         formatted_points.append({
             "x": round(x * scale_factor, 2),
-            "y": round(-(y * scale_factor), 2)  # Flip Y
+            "y": round(-(y * scale_factor), 2)
         })
 
-    # 6. Save to File
     output_data = {
         "name": json_name_out,
         "points": formatted_points

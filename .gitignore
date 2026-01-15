@@ -1,8 +1,8 @@
 # Ignore temporary and backup files
 *.tmp
 *.autosave
-*.bak
 *.swp
+*.bak
 *.swo
 *.log
 *.lock
@@ -60,3 +60,5 @@ Thumbs.db
 /tools/
 test
 
+p5Stuffs.json
+p5stuffs.json
