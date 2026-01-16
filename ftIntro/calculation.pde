@@ -1,4 +1,4 @@
-public class complex{
+class complex{
 	float re;
 	float im;
 	// not necessarily a part of the complexNumber
@@ -14,7 +14,7 @@ public class complex{
 	void multiply(complex c){
 		float tempRe = this.re;
 		this.re = (tempRe * c.re) - (this.im * c.im);
-		this.im = (tempRe * c.im) + (c.re + this.im);
+		this.im = (tempRe * c.im) + (c.re * this.im);
 	}
 }
 
@@ -40,6 +40,7 @@ ArrayList<complex> dft(ArrayList<complex> Xn){
 	int m = (N % 2 == 0) ? N/2 : (N-1)/2;
 
 	for (int k = -m; k < m - 1; k++) {
+	// for (int k = 0; k < N; k++) {
 		complex temp_k = new complex(0,0);
 		for (int n = 0; n < N; n++) {
 			float R = (2 * PI * n * k) / N ;
@@ -69,20 +70,25 @@ ArrayList<complex> dft(ArrayList<complex> Xn){
 //
 // calcualte the interpolation function and draw the closed curve
 //  
-// NOTE: make sure to explain the interpolation function
+//  NOTE: make sure to explain the interpolation function
 // Whats the point of taking DFT and IDFT right after? isn't it useless?
 //  > we pass in the points then get a function of "time" that approximately 
 //		fills the missing path between points so we basically reverse
 //		engineered a function using only by knowing its output.
 
-complex idft(ArrayList<complex> Xk, float t){
+// WARN: DO NOT PASS IN THE SORTED LIST OF "Xk"
+PVector idft(float x ,float y, ArrayList<complex> Xk, float t, float scale){
 	// where t is the time and is between [0,2π]
-	complex zt = new complex(0.0);
+	complex zt = new complex(0,0);
 
 	for (int k = 0; k < Xk.size(); k++) {
-		Xk.get(k).multiply(new complexNumber(cos(kt),sin(kt)));
+		float freq = Xk.get(k).Frequency;
+		complex temp_k = new complex(cos(freq*  t),sin(freq* t));
+		temp_k.multiply(Xk.get(k));
+		zt.add(temp_k);
 	}
-	return zt;
+
+	return new PVector(x + zt.re * scale, y + zt.im * scale);
 }
 
 //-=-=-=-=-=-=-=[Draw epicycles from Xk]=-=-=-==-=-=-=-=-
