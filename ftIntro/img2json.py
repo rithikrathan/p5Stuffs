@@ -1,3 +1,4 @@
+# NOTE: I WILL REWRIT THIS MYSELF, MY EGO WONT LET THIS AI GENERATION STAY
 import cv2
 import numpy as np
 import json
@@ -5,8 +6,8 @@ import os
 import sys
 
 # --- INCREASE RECURSION LIMIT ---
-# DFS on images requires a high recursion limit or it will crash
-sys.setrecursionlimit(50000)
+# Essential for DFS on high-res images to prevent "RecursionError"
+sys.setrecursionlimit(100000)
 
 # --- DEFAULT SETTINGS ---
 INPUT_DIR = './imgStuffs/monochrome/'
@@ -60,48 +61,47 @@ def get_user_input():
 
 def build_graph(points):
     """
-    Converts a list of pixels into a graph (Adjacency Dictionary).
-    Key: (x, y)
-    Value: List of neighbor (x, y) tuples
+    Builds an adjacency list graph where every pixel is connected to its
+    8 neighbors. This defines the 'valid' paths the pen can take.
     """
-    print("Building adjacency graph...")
+    print("Building connectivity graph...")
+    # Using a set for O(1) lookups is much faster than lists
     point_set = set(map(tuple, points))
     graph = {pt: [] for pt in point_set}
 
-    # Check 8 neighbors for every point
-    # (Optimized by only checking points that actually exist)
+    # Iterate over existing points only
     for x, y in point_set:
+        # Check all 8 surrounding pixels
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
                 if dx == 0 and dy == 0:
                     continue
-                nx, ny = x + dx, y + dy
-                if (nx, ny) in point_set:
-                    graph[(x, y)].append((nx, ny))
+                neighbor = (x + dx, y + dy)
+                if neighbor in point_set:
+                    graph[(x, y)].append(neighbor)
     return graph
 
 
 def dfs_trace(current, graph, visited, path):
     """
-    Depth First Search that effectively traces the skeleton.
-    If it hits a dead end, the recursion naturally unwinds (backtracks),
-    which effectively simulates the pen moving back along the line.
+    Recursive DFS. 
+    1. Visits a pixel.
+    2. Goes as deep as possible along neighbors.
+    3. When it hits a dead end, it returns, adding the node to the path AGAIN.
+       This creates the 'backtracking' effect (retracing the line) so the 
+       pen doesn't have to jump magically.
     """
     visited.add(current)
     path.append(current)
 
-    # Sort neighbors to prefer a specific direction (optional, but helps consistency)
-    # Here we sort to prioritize continuing in the same general direction if possible,
-    # but simple coordinate sorting is stable enough.
+    # Sorting neighbors ensures we prefer one direction, reducing 'jitter'
     neighbors = sorted(graph[current])
 
     for neighbor in neighbors:
         if neighbor not in visited:
             dfs_trace(neighbor, graph, visited, path)
-            # KEY FIX: If we return from a recursion, it means we hit a dead end
-            # and came back. We add 'current' to the path AGAIN.
-            # This creates the "retracing" effect so the line is continuous
-            # instead of jumping.
+            # CRITICAL: Backtrack. If we return from a branch, we must
+            # record our position again so the line is continuous.
             path.append(current)
 
 
@@ -118,10 +118,13 @@ def main():
         return
 
     _, thresh = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+
+    # Invert if the image is mostly white (we want the black lines)
     if np.mean(thresh) > 127:
         thresh = cv2.bitwise_not(thresh)
 
     # 2. Get Pixels
+    # Note: We do NOT downsample here. We need full resolution to check connectivity.
     ys, xs = np.nonzero(thresh)
     points = np.column_stack((xs, ys))
 
@@ -129,56 +132,60 @@ def main():
         print("Error: Image empty.")
         return
 
-    # 3. Build Graph
+    print(f"Found {len(points)} pixels. Building graph...")
+
+    # 3. Build Graph (Connectivity)
     graph = build_graph(points)
 
     # 4. Trace Paths (DFS)
     visited = set()
     full_ordered_path = []
 
-    # Sort starting points (Top-Left to Bottom-Right) to handle separate words
+    # Sort nodes to determine starting order for disconnected shapes (like separate letters)
     all_nodes = sorted(list(graph.keys()), key=lambda k: (k[1], k[0]))
 
-    print("Tracing paths with DFS (Backtracking enabled)...")
-
+    print("Tracing paths...")
     for node in all_nodes:
         if node not in visited:
-            # Start a new stroke (e.g., new word)
-            # If we already have points, this is a "Pen Up" jump to the next word.
-            # Since JSON format is single-line, this jump is unavoidable between separate words,
-            # but DFS ensures NO jumps inside the word itself.
+            # Start a new connected component (e.g., a new letter)
             dfs_trace(node, graph, visited, full_ordered_path)
 
-    # 5. Downsample
-    # We downsample the FINAL path, which includes the backtracks.
+            # Optional: Add a 'jump' indicator here if your plotter supports it.
+            # Currently, the loop just instantly jumps to the next start node.
+
+    # 5. Downsample the PATH
+    # We downsample the *ordered list*, preserving the drawing motion but reducing points.
     final_points = full_ordered_path[::res]
     print(f"Path generated with {len(final_points)} points.")
 
     # 6. Center & Scale
-    x_vals = [float(p[0]) for p in final_points]
-    y_vals = [float(p[1]) for p in final_points]
+    x_vals = [p[0] for p in final_points]
+    y_vals = [p[1] for p in final_points]
 
-    center_x = sum(x_vals) / len(x_vals)
-    center_y = sum(y_vals) / len(y_vals)
+    center_x = np.mean(x_vals)
+    center_y = np.mean(y_vals)
 
     x_centered = [x - center_x for x in x_vals]
     y_centered = [y - center_y for y in y_vals]
 
+    # Calculate max distance for scaling
     max_dist = 0
-    for i in range(len(x_centered)):
-        dist = np.sqrt(x_centered[i]**2 + y_centered[i]**2)
+    for x, y in zip(x_centered, y_centered):
+        dist = (x**2 + y**2) ** 0.5
         if dist > max_dist:
             max_dist = dist
+
     if max_dist == 0:
         max_dist = 1
-
     scale_factor = target_rad / max_dist
 
+    # Format Output
     formatted_points = []
     for x, y in zip(x_centered, y_centered):
         formatted_points.append({
-            "x": round(x * scale_factor, 2),
-            "y": round(-(y * scale_factor), 2)
+            "x": float(round(x * scale_factor, 2)),
+            # Flip Y for standard Cartesian
+            "y": float(round(-(y * scale_factor), 2))
         })
 
     output_data = {
