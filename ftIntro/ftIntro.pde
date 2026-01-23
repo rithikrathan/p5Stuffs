@@ -1,4 +1,4 @@
-boolean export = false;
+boolean export = true;
 boolean showRef = false;
 boolean useJson = false;
 boolean showEpicycles = true;
@@ -30,7 +30,7 @@ color[] epicycleColors = {
 int sortType = 2;
 int grad = 12; // use to define the gradient
 int cycleCount = 23;
-int trailLength = 89;
+int trailLength = 300;
 int resolution = -1;
 int initialDelay = 0; // in seconds, starts the sketch after 5 seconds
 int FrameRate = 60;
@@ -38,7 +38,7 @@ int FrameRate = 60;
 float dt;
 float alpha;
 float time = 0;
-float speedMultiplier = 0.08;
+float speedMultiplier = 0.069;
 float digScale = 1.6;
 float increment = 0.3;
 
