@@ -794,36 +794,36 @@
       "type": "FOLDER"
     },
     {
-      "valueFloat": 100.0,
+      "valueFloat": 136.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "radius",
       "type": "VALUE"
     },
     {
-      "valueFloat": 0.7000004649162292,
+      "valueFloat": -1.0,
       "valueFloatPrecision": 0.1,
       "className": "SliderNode",
       "path": "thetaMain",
       "type": "VALUE"
     },
     {
-      "valueFloat": 70.0,
+      "valueFloat": 357.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "thetaFrom",
       "type": "VALUE"
     },
     {
-      "valueFloat": 348.0,
+      "valueFloat": 114.0,
       "valueFloatPrecision": 1.0,
       "className": "SliderNode",
       "path": "thetaTo",
       "type": "VALUE"
     },
     {
-      "valueFloat": 0.2899976074695587,
-      "valueFloatPrecision": 0.01,
+      "valueFloat": 0.03609999641776085,
+      "valueFloatPrecision": 0.001,
       "className": "SliderNode",
       "path": "dt",
       "type": "VALUE"
@@ -845,8 +845,8 @@
     }
   ],
   "window": {
-    "posX": 132.0,
-    "posY": 330.0,
+    "posX": 0.0,
+    "posY": 352.0,
     "closed": false,
     "windowSizeX": 154.0
   },

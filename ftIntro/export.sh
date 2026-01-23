@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Configuration
+#r Configuration
 INPUT_DIR="./videoFrames"
 OUTPUT_DIR="./exports"
 INPUT_PATTERN="frame-%06d.png" # Matches frame-000001.png, etc.
