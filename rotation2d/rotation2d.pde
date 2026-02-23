@@ -119,7 +119,7 @@ void draw() {
     
     if (playing) {
         time += dt;
-        if (time > 1.0) time = 1.0; // Clamp it so we don't overshoot
+        if (time > 1.0) time = 1.0; 
 
         float theta_from = ptf.getPhase(); // Start Angle
         float theta_to   = ptt.getPhase(); // Target Angle
@@ -161,11 +161,6 @@ void draw() {
 
     handleGui();
 }
-
-float linearInterpolation(float from, float to, float time){
-    return (1-time) * from + (time * to);
-}
-
 
 void handleGui() {
     radius = gui.slider("radius", 100, 10, 200);
