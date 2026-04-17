@@ -271,16 +271,6 @@ class math2samples {
 			Xn.add(new complex(x, -y));
 		}
 	}
-
-
-
-
-
-
-
-
-
-
 }
 
 

@@ -16,6 +16,6 @@ void draw() {
 	drawAxes();
 
 	if (export) {
-		saveFrame("videoFrames/frame-######.png")
+		saveFrame("videoFrames/frame-######.png");
 	}
 }
