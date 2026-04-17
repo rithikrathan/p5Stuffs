@@ -38,9 +38,9 @@ int FrameRate = 60;
 float dt;
 float alpha;
 float time = 0;
+float increment = 0.3;
 float speedMultiplier = 0.069;
 float digScale = 1.6;
-float increment = 0.3;
 
 String jsonName = "./diagrams/heart.json";
 String shapeName = "circle";
@@ -68,8 +68,8 @@ void setup(){
 
 	time = 0;
 	// handle loading the Xk list here either from a function or from json
-
 	if (useJson) {
+
 		importJson(jsonName);
 	}	else{
 		m2s.heartCurve(0,0,10);

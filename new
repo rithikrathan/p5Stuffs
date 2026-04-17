@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: new <fileBaseName>"
+  exit 1
+fi
+
+if [ -d "$1" ]; then
+  echo "Error: directory '$1' already exists"
+  exit 1
+fi
+
+cp -r Template "$1"
+mv "$1/Template.pde" "$1/${1}.pde"
+mv "$1/utils.pde" "$1/${1}_utils.pde"
+
+echo "Created sketch: $1"
