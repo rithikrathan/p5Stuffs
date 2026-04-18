@@ -8,7 +8,7 @@ void setup() {
 }
 
 void draw() {
-	background(10,10,30);
+	watermarkBackground(color(10,10,30), color(40), "Template");
 	translate(400,400);
 	scale(1,-1);
 
@@ -16,6 +16,6 @@ void draw() {
 	drawAxes();
 
 	if (export) {
-		saveFrame("videoFrames/frame-######.png");
+		saveFrame("videoFrames/frame-########.png");
 	}
 }

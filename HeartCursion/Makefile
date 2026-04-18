@@ -29,7 +29,7 @@ video:
 		exit 1; \
 	fi
 	@echo "Stitching frames into $(VIDEO_OUT)..."
-	$(FFMPEG) -y -framerate $(FPS) -i "$(FRAME_DIR)/frame-%06d.png" \
+	$(FFMPEG) -y -framerate $(FPS) -i "$(FRAME_DIR)/frame-%08d.png" \
 		-c:v libx264 -pix_fmt yuv420p -crf 18 "$(VIDEO_OUT)"
 
 clean:
